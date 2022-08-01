@@ -30,9 +30,8 @@ public class ModuleManager
     @Override
     public synchronized void load(Plugin plugin) throws Throwable {
         Preconditions.checkNotNull(plugin);
-        // Omits the `load` notify to all modules
         forEach((aClass, challengeModule) -> {
-            // Handles the load action for us
+            // Omits the `load` notify to all modules
             handleLoadAction(() -> challengeModule.load(plugin));
         });
     }
@@ -40,9 +39,8 @@ public class ModuleManager
     @Override
     public synchronized void unload(Plugin plugin) throws Throwable {
         Preconditions.checkNotNull(plugin);
-        // Omits the `unload` notify to all modules
         forEach((aClass, challengeModule) -> {
-            // Handles the load action for us
+            // Omits the `unload` notify to all modules
             handleLoadAction(() -> challengeModule.unload(plugin));
         });
     }

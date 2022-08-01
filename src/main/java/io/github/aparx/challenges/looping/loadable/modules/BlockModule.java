@@ -3,8 +3,10 @@ package io.github.aparx.challenges.looping.loadable.modules;
 import io.github.aparx.challenges.looping.ChallengePlugin;
 import io.github.aparx.challenges.looping.loadable.ChallengeModule;
 import io.github.aparx.challenges.looping.loadable.ListenerLoadable;
+import org.bukkit.event.Cancellable;
+import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.block.*;
 
 /**
  * @author aparx (Vinzent Zeband)
@@ -17,7 +19,19 @@ public class BlockModule
 
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent event) {
-        SchedulerModule scheduler = ChallengePlugin.getScheduler();
+        if (isEventInvalid(event)) return;
+        SchedulerModule module = ChallengePlugin.getScheduler();
+        module.getScheduler(33);
+    }
+
+    @EventHandler
+    public void onBlockBreak(BlockBreakEvent event) {
+        if (isEventInvalid(event)) return;
+    }
+
+    private boolean isEventInvalid(Event event) {
+        return isPaused() || event instanceof Cancellable
+                && ((Cancellable) event).isCancelled();
     }
 
 }

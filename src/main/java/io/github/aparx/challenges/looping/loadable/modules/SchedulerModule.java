@@ -9,7 +9,6 @@ import org.bukkit.plugin.Plugin;
  * @since 1.0
  */
 public class SchedulerModule extends ChallengeModule {
-
     @Override
     public void load(Plugin plugin) throws Throwable {
 

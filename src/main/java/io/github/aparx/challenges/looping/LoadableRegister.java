@@ -25,10 +25,8 @@ public class LoadableRegister<T extends PluginLoadable> {
     private final Plugin manager;
 
     // Map storing all our singleton objects associated to their origin
-    private final Map<
-            @NotNull Class<? extends T>,
-            @NotNull T> table
-            = new ConcurrentHashMap<>();
+    private final Map<@NotNull Class<? extends T>, @NotNull T>
+            table = new ConcurrentHashMap<>();
 
     public LoadableRegister(@NotNull Plugin manager) {
         this.manager = Preconditions.checkNotNull(manager);
@@ -78,9 +76,7 @@ public class LoadableRegister<T extends PluginLoadable> {
     }
 
     public void unregisterAll() {
-        Collection<T> col = table.values();
-        table.clear(); // clear before to avoid concurrent modification
-        for (T loadable : col) {
+        for (T loadable : table.values()) {
             handleLoadAction(() -> loadable.unload(getManager()));
         }
     }
