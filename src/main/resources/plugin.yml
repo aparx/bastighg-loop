@@ -1,0 +1,6 @@
+name: AllesLooped
+version: '${project.version}'
+main: io.github.aparx.challenges.looping.ChallengePlugin
+api-version: 1.19
+authors: [ bonedfps ]
+description: \"Alles-Looped\"-Challenge für Basti
