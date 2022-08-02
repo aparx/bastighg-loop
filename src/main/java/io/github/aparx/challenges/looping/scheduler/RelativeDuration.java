@@ -17,11 +17,7 @@ import javax.validation.constraints.NotNull;
  */
 public final class RelativeDuration {
 
-    public static RelativeDuration FASTEST_SURVIVOR = ofSurvivor(0);
-    public static RelativeDuration SECOND_SURVIVOR = ofSurvivor(20);
-    public static RelativeDuration MINUTE_SURVIVOR = ofSurvivor(20 * 60);
-    public static RelativeDuration HOUR_SURVIVOR = ofSurvivor(20 * 60 * 60);
-    public static RelativeDuration DAY_SURVIVOR = ofSurvivor(20 * 60 * 60 * 24);
+    public static RelativeDuration NODELAY_LASTING = ofSurvivor(0);
 
     /* TaskDuration factory methods */
 

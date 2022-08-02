@@ -54,7 +54,6 @@ public abstract class AbstractTask extends StatePauseable {
 
     private boolean isStarted;
 
-
     public AbstractTask(@NotNull RelativeDuration duration) {
         this(ThreadLocalRandom.current().nextInt(), duration);
     }
@@ -68,8 +67,7 @@ public abstract class AbstractTask extends StatePauseable {
 
     /* Abstract event methods */
 
-    protected void onUpdate() {
-    }
+    protected void onUpdate() {}
 
     abstract protected void onStart();
 
@@ -96,10 +94,7 @@ public abstract class AbstractTask extends StatePauseable {
 
     public synchronized final void updateTask() {
         if (!isStarted() || isPaused()) return;
-        if (!hasCallsLeft()) {
-            stop();
-            return;
-        }
+        if (!hasCallsLeft()) { stop(); return; }
         if (!duration.isMatchingCycle(++ticksAlive)) return;
         // We use methods to give the possibility of overriding the
         // behaviour. Scheduled for change, due to pass by value cost. TODO

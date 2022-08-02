@@ -91,7 +91,7 @@ public class LoadableRegister<T extends PluginLoadable> {
         return table;
     }
 
-    public void handleLoadAction(@NotNull ThrowableRunnable action) {
+    public static void handleLoadAction(@NotNull ThrowableRunnable action) {
         try {
             action.run();
         } catch (Throwable t) {

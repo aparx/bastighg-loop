@@ -28,7 +28,7 @@ public class GameScheduler extends AbstractTask {
 
     public GameScheduler(
             final @NotNull Plugin plugin) {
-        this(plugin, RelativeDuration.FASTEST_SURVIVOR);
+        this(plugin, RelativeDuration.NODELAY_LASTING);
     }
 
     public GameScheduler(
@@ -59,7 +59,7 @@ public class GameScheduler extends AbstractTask {
     @Override
     protected synchronized final void onStart() {
         if (isStarted()) return;
-        task = RelativeDuration.FASTEST_SURVIVOR
+        task = RelativeDuration.NODELAY_LASTING
                 .createTask(getPlugin(), this::updateTask);
         // Starts all in-memory children in case they are not started yet
         children.forEach((id, task) -> task.start());
@@ -71,6 +71,7 @@ public class GameScheduler extends AbstractTask {
         if (!isStarted()) return;
         task.cancel();
         task = null;
+        children.forEach((id, task) -> task.stop());
         onScheduleStop();
     }
 

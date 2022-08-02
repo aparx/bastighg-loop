@@ -1,6 +1,9 @@
 package io.github.aparx.challenges.looping.loadable.modules;
 
 import io.github.aparx.challenges.looping.loadable.ChallengeModule;
+import io.github.aparx.challenges.looping.scheduler.AbstractTask;
+import io.github.aparx.challenges.looping.scheduler.GameScheduler;
+import io.github.aparx.challenges.looping.scheduler.RelativeDuration;
 import org.bukkit.plugin.Plugin;
 
 /**
@@ -9,13 +12,21 @@ import org.bukkit.plugin.Plugin;
  * @since 1.0
  */
 public class SchedulerModule extends ChallengeModule {
-    @Override
-    public void load(Plugin plugin) throws Throwable {
 
+    private GameScheduler mainScheduler;
+
+    @Override
+    public void onLoad(Plugin plugin) throws Throwable {
+        mainScheduler = new GameScheduler(plugin);
+        mainScheduler.start();
     }
 
     @Override
-    public void unload(Plugin plugin) throws Throwable {
+    public void onUnload(Plugin plugin) throws Throwable {
+        mainScheduler.stop();
+    }
 
+    public GameScheduler getMainScheduler() {
+        return mainScheduler;
     }
 }

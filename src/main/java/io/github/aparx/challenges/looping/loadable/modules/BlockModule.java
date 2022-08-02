@@ -6,6 +6,7 @@ import io.github.aparx.challenges.looping.loadable.ListenerLoadable;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
 import org.bukkit.event.block.*;
 
 /**
@@ -13,15 +14,12 @@ import org.bukkit.event.block.*;
  * @version 07:30 CET, 01.08.2022
  * @since 1.0
  */
-public class BlockModule
-        extends ChallengeModule
-        implements ListenerLoadable {
+public class BlockModule extends ChallengeModule implements Listener {
 
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent event) {
         if (isEventInvalid(event)) return;
         SchedulerModule module = ChallengePlugin.getScheduler();
-        module.getScheduler(33);
     }
 
     @EventHandler

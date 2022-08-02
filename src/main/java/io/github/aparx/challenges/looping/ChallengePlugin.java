@@ -69,6 +69,7 @@ public final class ChallengePlugin extends JavaPlugin {
             pluginMagics.setState(PRE_LOAD);
             pluginMagics.setDebugMode(false);
             moduleManager.registerDefaults(this);
+            loadableRegister.register(moduleManager);
             loadableRegister.register(new MainLoadable());
         } catch (Throwable t) {
             t.printStackTrace();

@@ -7,7 +7,9 @@ import io.github.aparx.challenges.looping.PluginMagics;
 import io.github.aparx.challenges.looping.loadable.ChallengeModule;
 import io.github.aparx.challenges.looping.loadable.PluginLoadable;
 import io.github.aparx.challenges.looping.loadable.modules.BlockModule;
+import io.github.aparx.challenges.looping.loadable.modules.EntityLoopModule;
 import io.github.aparx.challenges.looping.loadable.modules.SchedulerModule;
+import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 
 import javax.validation.constraints.NotNull;
@@ -45,12 +47,19 @@ public class ModuleManager
         });
     }
 
+    public synchronized void notifyPause(boolean paused) {
+        forEach((aClass, challengeModule) -> {
+           challengeModule.setPaused(paused);
+        });
+    }
+
     public synchronized void registerDefaults(@NotNull Plugin plugin) {
         Preconditions.checkNotNull(plugin);
         final PluginMagics magics = ChallengePlugin.getMagics();
         Preconditions.checkArgument(magics.isState(PRE_LOAD));
         register(new SchedulerModule());
         register(new BlockModule());
+        register(new EntityLoopModule(plugin));
     }
 
 }

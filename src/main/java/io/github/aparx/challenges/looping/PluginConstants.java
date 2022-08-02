@@ -11,8 +11,10 @@ public final class PluginConstants {
 
     public static final String PLUGIN_NAME = "AllesLooped";
 
-    public static final boolean DEBUG_MODE = false;
+    public static final boolean DEBUG_MODE = true;
 
     public static final long CHALLENGE_INTERVAL = 5*20;
+
+    public static final long LOOP_ENTITY_UPDATE = CHALLENGE_INTERVAL / 20;
 
 }
