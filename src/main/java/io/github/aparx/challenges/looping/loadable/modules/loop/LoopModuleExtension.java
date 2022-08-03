@@ -8,11 +8,12 @@ import io.github.aparx.challenges.looping.loadable.ChallengeModule;
 import io.github.aparx.challenges.looping.loadable.modules.SchedulerModule;
 import io.github.aparx.challenges.looping.scheduler.GameScheduler;
 import lombok.Getter;
-import org.apache.commons.lang3.StringUtils;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.Plugin;
 
@@ -30,6 +31,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public abstract class LoopModuleExtension<T extends LoopEntity>
         extends ChallengeModule {
 
+    public static final String KEY_UNIQUE_ID = "linkedId";
+
     @NotNull
     private final Map<UUID, T> entities = new ConcurrentHashMap<>();
 
@@ -40,7 +43,7 @@ public abstract class LoopModuleExtension<T extends LoopEntity>
         this.metadataKey = Preconditions.checkNotNull(metadataKey);
     }
 
-    abstract public LoopEntityMetadata allocateMetadata(@NotNull ArmorStand armorStand);
+    abstract public MetadataWrapper allocateMetadata(@NotNull ArmorStand armorStand);
 
     abstract public T allocateEntity(@NotNull ArmorStand armorStand);
 
@@ -49,12 +52,20 @@ public abstract class LoopModuleExtension<T extends LoopEntity>
         return entities;
     }
 
+    public UUID getSupposedLinkage(Entity entity) {
+        try {
+            // TODO heap allocation unnecessary?
+            return new MetadataWrapper(entity, getMetadataKey()).getObject(KEY_UNIQUE_ID);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     @Nullable
     public T getLinkedEntityFrom(Entity entity) {
-        String name = entity.getCustomName();
-        if (StringUtils.isEmpty(name)) return null;
         try {
-            UUID uuid = UUID.fromString(name);
+            // TODO heap allocation unnecessary?
+            UUID uuid = getSupposedLinkage(entity);
             if (!hasEntity(uuid)) return null;
             return getEntity(uuid);
         } catch (Exception e) {
@@ -107,8 +118,7 @@ public abstract class LoopModuleExtension<T extends LoopEntity>
         // `entity` is (re-)introduced, thus attached to the game-loop
         // again and stored in temporary memory
         registerEntity(entity);
-        //Bukkit.broadcastMessage("§bintroduce " + entity);
-        System.out.println("introduce " + entity.getTemporaryId());
+        //System.out.println("introduce " + entity.getUniqueId());
         return entity.attachToGameLoop(getScheduler());
     }
 
@@ -118,8 +128,8 @@ public abstract class LoopModuleExtension<T extends LoopEntity>
         // clearing overall memory and giving the GC the ability
         // to cleanup
         if (!unregisterEntity(entity)) return false;
-        System.out.println("invalidate " + entity.getTemporaryId());
-        //Bukkit.broadcastMessage("§cinvalidate " + entity);
+        //System.out.println("invalidate " + entity.getUniqueId());
+        entity.onInvalidate();
         return entity.detachFromGameLoop(getScheduler());
     }
 
@@ -145,7 +155,7 @@ public abstract class LoopModuleExtension<T extends LoopEntity>
         World world = location.getWorld();
         Preconditions.checkNotNull(world);
         return world.spawn(location, ArmorStand.class, e -> {
-            e.setInvisible(!PluginConstants.DEBUG_MODE);
+            e.setInvisible(true);
             e.setInvulnerable(true);
             e.setAbsorptionAmount(Double.MAX_VALUE);
             e.setGravity(false);

@@ -13,6 +13,7 @@ import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * A decorator containing a collection of {@code CapturedBlockData}, used
@@ -75,16 +76,24 @@ public final class CapturedStructure {
     /* passive operations */
 
     public void placeCapture() {
-        placeCapture(true);
+        placeCapture(null);
     }
 
-    public void placeCapture(boolean playEffect) {
-        placeCapture(0, 0, 0, playEffect);
+    public void placeCapture(
+            @Nullable Consumer<Location> action) {
+        placeCapture(true, action);
+    }
+
+    public void placeCapture(
+            boolean playEffect,
+            @Nullable Consumer<Location> action) {
+        placeCapture(0, 0, 0, playEffect, action);
     }
 
     public void placeCapture(
             int offsetX, int offsetY, int offsetZ,
-            boolean playEffect) {
+            boolean playEffect,
+            @Nullable Consumer<Location> action) {
         for (CapturedBlockData data : blockData) {
             if (data == null) continue;
             Location location = data.getLocation();
@@ -103,6 +112,8 @@ public final class CapturedStructure {
                 // Now we play the visual effect as it is wanted behaviour
                 effectPlayer.playParticles(world, posX, posY, posZ);
             }
+            if (action != null)
+                action.accept(location);
         }
     }
 

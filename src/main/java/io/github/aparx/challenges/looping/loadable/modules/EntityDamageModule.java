@@ -1,6 +1,7 @@
 package io.github.aparx.challenges.looping.loadable.modules;
 
 import io.github.aparx.challenges.looping.ChallengePlugin;
+import io.github.aparx.challenges.looping.loadable.ChallengeModule;
 import io.github.aparx.challenges.looping.scheduler.AbstractTask;
 import io.github.aparx.challenges.looping.scheduler.GameScheduler;
 import org.bukkit.Location;
@@ -11,6 +12,7 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.plugin.Plugin;
@@ -25,7 +27,7 @@ import java.util.concurrent.ThreadLocalRandom;
  * @version 16:28 CET, 03.08.2022
  * @since 1.0
  */
-public class EntityModule extends EntityLoopModule {
+public class EntityDamageModule extends ChallengeModule implements Listener {
 
     /**
      * After {@code 100} iterations in which an entity is damaged because
@@ -35,10 +37,6 @@ public class EntityModule extends EntityLoopModule {
      * run simultaneously.
      */
     public static final int MAX_ENTITY_ITERATIONS = 50;
-
-    public EntityModule(Plugin plugin) {
-        super(plugin);
-    }
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onEntityDead(EntityDeathEvent event) {

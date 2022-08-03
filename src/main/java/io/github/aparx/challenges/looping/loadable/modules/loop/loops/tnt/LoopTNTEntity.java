@@ -24,7 +24,7 @@ import java.util.List;
  * @version 08:00 CET, 02.08.2022
  * @since 1.0
  */
-public class TNTLoopEntity extends LoopEntity {
+public class LoopTNTEntity extends LoopEntity {
 
     private boolean loopDone = false;
 
@@ -33,13 +33,22 @@ public class TNTLoopEntity extends LoopEntity {
     public static final long INTERVAL_TIME
             = PluginConstants.CHALLENGE_INTERVAL + 80 /* default fuse time */;
 
-    public TNTLoopEntity(
+    public LoopTNTEntity(
             final @NotNull ArmorStand entity,
             final @NotNull LoopModuleExtension<?> module) {
         super(entity, module,
                 module.allocateMetadata(entity),
                 /* running 10 times in INTERVAL_TIME */
                 INTERVAL_TIME / 10);
+    }
+
+    @Override
+    public void onInvalidate() {
+        // Since we left the chunk, or this entity got invalidated
+        // whilst we still have blocks to reset, we do them immediately.
+        if (blockCache == null) return;
+        blockCache.placeCapture();
+        blockCache = null;
     }
 
     @Override
@@ -65,7 +74,7 @@ public class TNTLoopEntity extends LoopEntity {
 
     @Override
     protected synchronized void onUpdate() {
-        ArmorStand entity = getEntityReference();
+        ArmorStand entity = getEntity();
         if (entity == null) return;
         if (loopDone && getCallAmount() > 1) {
             loopDone = false;

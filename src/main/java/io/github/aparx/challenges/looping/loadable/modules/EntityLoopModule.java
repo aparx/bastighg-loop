@@ -5,8 +5,8 @@ import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import io.github.aparx.challenges.looping.LoadableRegister;
 import io.github.aparx.challenges.looping.loadable.ChallengeModule;
 import io.github.aparx.challenges.looping.loadable.modules.loop.LoopModuleExtension;
-import io.github.aparx.challenges.looping.loadable.modules.loop.loops.projectile.ProjectileLoopModule;
-import io.github.aparx.challenges.looping.loadable.modules.loop.loops.tnt.TNTLoopModule;
+import io.github.aparx.challenges.looping.loadable.modules.loop.loops.tnt.LoopTNTModule;
+import io.github.aparx.challenges.looping.loadable.modules.loop.projectile.LoopProjectileModule;
 import lombok.Getter;
 import org.apache.commons.lang3.ArrayUtils;
 import org.bukkit.entity.ArmorStand;
@@ -49,8 +49,8 @@ public class EntityLoopModule
     }
 
     public void registerDefaults() {
-        register(new TNTLoopModule());
-        register(new ProjectileLoopModule(getPlugin()));
+        register(new LoopTNTModule());
+        register(new LoopProjectileModule(getPlugin()));
     }
 
     @SuppressWarnings("unchecked")

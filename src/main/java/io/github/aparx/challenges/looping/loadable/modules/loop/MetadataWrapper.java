@@ -21,7 +21,7 @@ import java.util.Optional;
  * @version 12:16 CET, 02.08.2022
  * @since 1.0
  */
-public class LoopEntityMetadata {
+public class MetadataWrapper {
 
     public static final String KEY_CALL_AMOUNT = "l_callAmount";
 
@@ -30,8 +30,7 @@ public class LoopEntityMetadata {
 
     @NotNull @Getter
     private final String baseMetadataKey;
-
-    public LoopEntityMetadata(
+    public MetadataWrapper(
             final @NotNull Entity entity,
             final @NotNull String baseKey) {
         this.entity = Preconditions.checkNotNull(entity);

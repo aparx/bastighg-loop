@@ -1,7 +1,7 @@
-package io.github.aparx.challenges.looping.loadable.modules.loop.loops.projectile;
+package projectile;
 
 import com.google.common.base.Preconditions;
-import io.github.aparx.challenges.looping.loadable.modules.loop.LoopEntityMetadata;
+import io.github.aparx.challenges.looping.loadable.modules.loop.MetadataWrapper;
 import io.github.aparx.challenges.looping.loadable.modules.loop.LoopModuleExtension;
 import lombok.Getter;
 import org.bukkit.Location;
@@ -32,8 +32,8 @@ public class ProjectileLoopModule extends LoopModuleExtension<ProjectileLoopEnti
     }
 
     @Override
-    public LoopEntityMetadata allocateMetadata(ArmorStand armorStand) {
-        return new LoopEntityMetadata(armorStand, META_KEY);
+    public MetadataWrapper allocateMetadata(ArmorStand armorStand) {
+        return new MetadataWrapper(armorStand, META_KEY);
     }
 
     @Override
@@ -44,14 +44,14 @@ public class ProjectileLoopModule extends LoopModuleExtension<ProjectileLoopEnti
     @EventHandler
     public void onShoot(ProjectileLaunchEvent event) {
         Projectile projectile = event.getEntity();
-        System.out.println("LAUNCH_EVENT");
-        //if (shooter instanceof Player) return;
+        //if (!(projectile.getShooter() instanceof Player)) return;
         if (getLinkedEntityFrom(projectile) != null) return;
         Location self = projectile.getLocation();
         Location location = event.getLocation();
         location.setYaw(self.getYaw());
         location.setPitch(self.getPitch());
         ProjectileLoopEntity entity = spawnAndRegister(getPlugin(), location);
+        System.out.println("> LAUNCHED WITH " + getLinkedEntityFrom(projectile));
         System.out.println("> LAUNCHED_NEW_PROJECTILE " + location.getYaw() + "/" + location.getPitch());
         entity.setProjectile(projectile);
         entity.setForceVector(projectile.getVelocity());

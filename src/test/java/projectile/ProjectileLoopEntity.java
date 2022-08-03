@@ -1,9 +1,9 @@
-package io.github.aparx.challenges.looping.loadable.modules.loop.loops.projectile;
+package projectile;
 
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import io.github.aparx.challenges.looping.PluginConstants;
 import io.github.aparx.challenges.looping.loadable.modules.loop.LoopEntity;
-import io.github.aparx.challenges.looping.loadable.modules.loop.LoopEntityMetadata;
+import io.github.aparx.challenges.looping.loadable.modules.loop.MetadataWrapper;
 import io.github.aparx.challenges.looping.loadable.modules.loop.LoopModuleExtension;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -49,7 +49,7 @@ public class ProjectileLoopEntity extends LoopEntity {
 
     @NotNull
     public final Vector getForceVector() {
-        LoopEntityMetadata metadata = getMetadata();
+        MetadataWrapper metadata = getMetadata();
         if (metadata == null) return new Vector();
         return metadata.getObject(KEY_VELOCITY);
     }
@@ -58,7 +58,7 @@ public class ProjectileLoopEntity extends LoopEntity {
     public final Projectile getProjectile() {
         if (projectile != null || isInvalid())
             return projectile;
-        LoopEntityMetadata meta = getMetadata();
+        MetadataWrapper meta = getMetadata();
         UUID uuid = meta.getObject(KEY_PROJECTILE_UUID);
         if (uuid == null) {
             shootNewProjectile(getForceVector());
@@ -78,7 +78,7 @@ public class ProjectileLoopEntity extends LoopEntity {
     @CanIgnoreReturnValue
     public final boolean setForceVector(@Nullable Vector vector) {
         if (isInvalid()) return false;
-        LoopEntityMetadata metadata = getMetadata();
+        MetadataWrapper metadata = getMetadata();
         metadata.set(KEY_VELOCITY, ensureNonnullVector(vector));
         return metadata.contains(KEY_VELOCITY);
     }
@@ -90,7 +90,7 @@ public class ProjectileLoopEntity extends LoopEntity {
         if (projectile != null) {
             linkEntityToThis(projectile);
         }
-        LoopEntityMetadata metadata = getMetadata();
+        MetadataWrapper metadata = getMetadata();
         metadata.set(KEY_PROJECTILE_UUID, projectile == null
                 ? null : projectile.getUniqueId());
         metadata.set(KEY_TYPE, projectile == null
@@ -100,7 +100,7 @@ public class ProjectileLoopEntity extends LoopEntity {
 
     public void shootNewProjectile(Vector vector) {
         if (isInvalid()) return;
-        shootNewProjectile(getEntityReference().getLocation(), vector);
+        shootNewProjectile(getEntity().getLocation(), vector);
     }
 
     public void shootNewProjectile(
@@ -129,10 +129,11 @@ public class ProjectileLoopEntity extends LoopEntity {
         if (type == null) return;
         Class<? extends Entity> entityClass = type.getEntityClass();
         if (entityClass == null) return;
-        setProjectile((Projectile) world.spawn(location, entityClass, e -> {
-            linkEntityToThis(e);
+        System.out.println("shoot");
+        /*setProjectile((Projectile) world.spawn(location, entityClass, e -> {
+            linkEntityToThis(e);    // additionally, pre-spawn
             if (action != null) action.accept((Projectile) e);
-        }));
+        }));*/
     }
 
     public void applyVelocity(final Projectile projectile, @Nullable Vector vector) {
@@ -144,13 +145,14 @@ public class ProjectileLoopEntity extends LoopEntity {
     protected void onLoop() {
         // calculate all points between both the projectile and the entity
         if (isInvalid()) return;
+        System.out.println("loop update");
         // notify the onUpdate() of the current state
         bringBack = true;
         if (projectile == null) return;
         if (hitLocation == null) return;
         projectile.remove();
         // f(x) = (x + 0.08) * 0.98 -> f(x) = (x - 0.02) / 1.02 ?
-        ArmorStand entity = getEntityReference();
+        ArmorStand entity = getEntity();
         Location endPos = entity.getLocation();
         Location hitPos = hitLocation.clone();
         final Vector initial = getForceVector();
@@ -177,7 +179,7 @@ public class ProjectileLoopEntity extends LoopEntity {
         }
         // After we looped, we do not want automatic loop causes,
         // thus we count manually in the speed required.
-        ArmorStand entity = getEntityReference();
+        ArmorStand entity = getEntity();
         Projectile projectile = getProjectile();
         if (projectile == null || !projectile.isValid()) {
             // Causes the loop to be done

@@ -2,7 +2,6 @@ package io.github.aparx.challenges.looping.loadable.modules.loop;
 
 import com.google.common.base.Preconditions;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
-import io.github.aparx.challenges.looping.PluginConstants;
 import io.github.aparx.challenges.looping.scheduler.AbstractTask;
 import io.github.aparx.challenges.looping.scheduler.GameScheduler;
 import io.github.aparx.challenges.looping.scheduler.RelativeDuration;
@@ -15,7 +14,7 @@ import javax.validation.constraints.NotNull;
 import java.lang.ref.WeakReference;
 import java.util.UUID;
 
-import static io.github.aparx.challenges.looping.loadable.modules.loop.LoopEntityMetadata.KEY_CALL_AMOUNT;
+import static io.github.aparx.challenges.looping.loadable.modules.loop.MetadataWrapper.KEY_CALL_AMOUNT;
 
 /**
  * Weak-referenced {@code ArmorStand} entity decorator, being an
@@ -39,12 +38,12 @@ public abstract class LoopEntity extends AbstractTask {
     private final UUID entityUUID;
 
     @NotNull @Getter
-    private LoopEntityMetadata metadata;
+    private MetadataWrapper metadata;
 
     public LoopEntity(
             final @NotNull ArmorStand entity,
             final @NotNull LoopModuleExtension<?> module,
-            @NotNull LoopEntityMetadata metadata,
+            @NotNull MetadataWrapper metadata,
             final long certaintyUpdateSpeed) {
         // The smaller `certaintyUpdateSpeed` the higher the overall
         // performance of the entity
@@ -68,12 +67,14 @@ public abstract class LoopEntity extends AbstractTask {
     protected void onDied() {
         getModule().invalidateEntity(this);
     }
+    public void onInvalidate() {}
 
     @Override
     protected void onUpdate() {
-        final ArmorStand e = getEntityReference();
-        if (e == null || metadata == null) return;
-        if (!e.isValid()) { onDied(); return; }
+        final ArmorStand e = getEntity();
+        if (metadata == null) return;
+        // TODO moved e-null check from /\ to \/, bug causing?
+        if (e == null || !e.isValid()) { onDied(); return; }
         // We do not do a reinterpreted cast to int, as it is unnecessary
         long steps = getStepsForLoop();
         long callAmount = getCallAmount();
@@ -122,8 +123,8 @@ public abstract class LoopEntity extends AbstractTask {
         // "Notify" underlying events that the spawning entity is part
         // of this entity, thus do not use it as if a third party
         // had caused to spawn it
-        entity.setCustomName(String.valueOf(getUniqueId()));
-        entity.setCustomNameVisible(PluginConstants.DEBUG_MODE);
+        new MetadataWrapper(entity, module.getMetadataKey())
+                .set(LoopModuleExtension.KEY_UNIQUE_ID, getUniqueId());
     }
 
     public void setSteps(int n) {
@@ -155,17 +156,17 @@ public abstract class LoopEntity extends AbstractTask {
     }
 
     public boolean isInvalid() {
-        final ArmorStand entity = getEntityReference();
+        final ArmorStand entity = getEntity();
         return entity == null || !entity.isValid() || metadata == null;
     }
 
     @Nullable
     public ArmorStand requireEntity() {
-        return Preconditions.checkNotNull(getEntityReference());
+        return Preconditions.checkNotNull(getEntity());
     }
 
     @Nullable
-    public ArmorStand getEntityReference() {
+    public ArmorStand getEntity() {
         return entityReference.get();
     }
 

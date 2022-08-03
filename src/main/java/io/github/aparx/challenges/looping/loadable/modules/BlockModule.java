@@ -8,6 +8,7 @@ import io.github.aparx.challenges.looping.loadable.modules.block.CapturedBlockDa
 import io.github.aparx.challenges.looping.loadable.modules.block.CapturedStructure;
 import io.github.aparx.challenges.looping.scheduler.AbstractTask;
 import io.github.aparx.challenges.looping.scheduler.GameScheduler;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
@@ -21,6 +22,7 @@ import org.bukkit.event.block.*;
 
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
+import java.util.HashSet;
 
 /**
  * @author aparx (Vinzent Zeband)
@@ -28,6 +30,9 @@ import javax.validation.constraints.NotNull;
  * @since 1.0
  */
 public class BlockModule extends ChallengeModule implements Listener {
+
+    private static final HashSet<Location> PLACED_BLOCKS = new HashSet<>(16);
+    private static final HashSet<Location> DESTROYED_BLOCKS = new HashSet<>(16);
 
     /**
      * Places given {@code structure} after the globally specified
@@ -45,23 +50,21 @@ public class BlockModule extends ChallengeModule implements Listener {
         GameScheduler scheduler = schedulerModule.getMainScheduler();
         scheduler.attach(AbstractTask.instantOfChallenge(task -> {
             if (event != null && event.isCancelled()) return;
-            structure.placeCapture();
+            structure.placeCapture(l -> {
+                PLACED_BLOCKS.remove(l);
+                DESTROYED_BLOCKS.remove(l);
+            });
         }));
-    }
-
-    private static boolean shouldBeIgnored(Player player) {
-        // TODO
-        //return player.getGameMode() != GameMode.CREATIVE;
-        return false;
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onBlockPlace(BlockPlaceEvent event) {
         if (isNonProcessableEventOrMoment(event)) return;
-        if (shouldBeIgnored(event.getPlayer())) return;
         BlockState blockReplacedState = event.getBlockReplacedState();
         BlockData blockData = blockReplacedState.getBlockData();
         Location location = blockReplacedState.getLocation();
+        if (!PLACED_BLOCKS.add(location)) return;
+        if (DESTROYED_BLOCKS.contains(location)) return;
         var struct = BlockStructures.getAffectedBlocks(event.getBlock(), false);
         struct = struct.add(CapturedBlockData.capture(location, blockData));
         lateStructurePlacement(struct, event);
@@ -70,9 +73,12 @@ public class BlockModule extends ChallengeModule implements Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     public void onBlockBreak(BlockBreakEvent event) {
         if (isNonProcessableEventOrMoment(event)) return;
-        if (shouldBeIgnored(event.getPlayer())) return;
-        lateStructurePlacement(BlockStructures.getAffectedBlocks(
-                event.getBlock(), true), event);
+        Block block = event.getBlock();
+        // TODO how do multi-structures behave with this set?
+        Location location = block.getLocation();
+        if (PLACED_BLOCKS.contains(location)) return;
+        if (!DESTROYED_BLOCKS.add(location)) return;
+        lateStructurePlacement(BlockStructures.getAffectedBlocks(block, true), event);
     }
 
 }

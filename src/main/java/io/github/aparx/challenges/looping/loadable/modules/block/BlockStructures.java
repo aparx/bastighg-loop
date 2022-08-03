@@ -31,12 +31,12 @@ public final class BlockStructures {
     public static CapturedStructure getAffectedBlocks(
             final @NotNull Block center, boolean basedOnCenter) {
         // if above is fallable, include blocks above TODO
-        CapturedStructure structure = CapturedStructure.EMPTY;
+        CapturedStructure struct = CapturedStructure.EMPTY;
         if (basedOnCenter) {
             // Since the center does matter, we include it
-            structure.add(CapturedBlockData.capture(center));
+            struct = struct.add(CapturedBlockData.capture(center));
         }
-        return structure;
+        return struct;
     }
 
     @NotNull
