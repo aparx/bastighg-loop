@@ -31,7 +31,8 @@ public final class CapturedBlockData {
     public static CapturedBlockData capture(
             final @NotNull Location location,
             final @NotNull BlockData blockData) {
-        return reference(location.clone(), blockData.clone());
+        // TODO should actually the location be cloned as well?
+        return reference(location, blockData.clone());
     }
 
     @NotNull

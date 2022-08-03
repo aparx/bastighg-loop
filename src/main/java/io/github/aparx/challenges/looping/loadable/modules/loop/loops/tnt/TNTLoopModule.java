@@ -3,14 +3,12 @@ package io.github.aparx.challenges.looping.loadable.modules.loop.loops.tnt;
 import io.github.aparx.challenges.looping.ChallengePlugin;
 import io.github.aparx.challenges.looping.loadable.ListenerLoadable;
 import io.github.aparx.challenges.looping.loadable.modules.loop.LoopEntityMetadata;
-import io.github.aparx.challenges.looping.loadable.modules.loop.LoopModule;
-import org.bukkit.Material;
-import org.bukkit.entity.ArmorStand;
-import org.bukkit.entity.EntityType;
+import io.github.aparx.challenges.looping.loadable.modules.loop.LoopModuleExtension;
+import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.EntitySpawnEvent;
-
-import java.util.EnumSet;
 
 /**
  * @author aparx (Vinzent Zeband)
@@ -18,30 +16,36 @@ import java.util.EnumSet;
  * @since 1.0
  */
 public class TNTLoopModule
-        extends LoopModule<TNTLoopEntity>
+        extends LoopModuleExtension<TNTLoopEntity>
         implements ListenerLoadable {
 
     public static final String META_KEY = "tnt_loop";
-
-    private static final EnumSet<Material> TNT_PRIME_CAUSES;
-
-    static {
-        TNT_PRIME_CAUSES = EnumSet.noneOf(Material.class);
-        TNT_PRIME_CAUSES.add(Material.FLINT_AND_STEEL);
-        TNT_PRIME_CAUSES.add(Material.FIRE_CHARGE);
-        // TODO
-    }
 
     public TNTLoopModule() {
         super(META_KEY);
     }
 
-
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOW)
     public void onSpawn(EntitySpawnEvent event) {
-        if (event.getEntityType() == EntityType.PRIMED_TNT) {
-            spawnAndRegister(ChallengePlugin.getInstance(), event.getLocation());
+        if (isPaused() || event.isCancelled()) return;
+        if (event.getEntityType() != EntityType.PRIMED_TNT) return;
+        if (!event.getLocation().getChunk().isLoaded()) return;
+        // Check if the TNT is spawned because of a loop spawning it
+        if (getLinkedEntityFrom(event.getEntity()) == null) {
+            TNTLoopEntity entity = spawnAndRegister(
+                    ChallengePlugin.getInstance(), event.getLocation());
+            entity.linkEntityToThis(event.getEntity());
         }
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onExplode(EntityExplodeEvent event) {
+        if (isPaused() || event.isCancelled()) return;
+        if (event.getEntityType() != EntityType.PRIMED_TNT) return;
+        // Check if the TNT is spawned because of a loop spawning it
+        TNTLoopEntity owner = getLinkedEntityFrom(event.getEntity());
+        if (owner == null) return;
+        owner.updateResetBlocks(event.blockList());
     }
 
     @Override
@@ -52,10 +56,6 @@ public class TNTLoopModule
     @Override
     public TNTLoopEntity allocateEntity(ArmorStand armorStand) {
         return new TNTLoopEntity(armorStand, this);
-    }
-
-    private boolean isPrimingItem(Material material) {
-        return material.isItem() && TNT_PRIME_CAUSES.contains(material);
     }
 
 }

@@ -2,10 +2,12 @@ package io.github.aparx.challenges.looping.loadable;
 
 import io.github.aparx.challenges.looping.functional.StatePauseable;
 import org.bukkit.Bukkit;
+import org.bukkit.event.Cancellable;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
 
+import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
 /**
@@ -48,5 +50,10 @@ public abstract class ChallengeModule
         if (this instanceof Listener o)
             HandlerList.unregisterAll(o);
         onUnload(plugin);
+    }
+
+    public boolean isNonProcessableEventOrMoment(@Nullable Object event) {
+        return isPaused() || event instanceof Cancellable
+                && ((Cancellable) event).isCancelled();
     }
 }

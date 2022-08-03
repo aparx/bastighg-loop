@@ -5,6 +5,7 @@ import io.github.aparx.challenges.looping.loadable.PluginLoadable;
 import io.github.aparx.challenges.looping.loadable.modules.SchedulerModule;
 import io.github.aparx.challenges.looping.loadable.variants.MainLoadable;
 import io.github.aparx.challenges.looping.loadable.variants.ModuleManager;
+import io.github.aparx.challenges.looping.logger.DebugLogger;
 import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -43,6 +44,11 @@ public final class ChallengePlugin extends JavaPlugin {
         return runningInstance.getPluginMagics();
     }
 
+    @NotNull
+    public static DebugLogger getDebugLogger() {
+        return getMagics().getDebugLogger();
+    }
+
     /* Plugin implementation */
 
     @NotNull @Getter
@@ -64,10 +70,14 @@ public final class ChallengePlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        final DebugLogger logger = DebugLogger.of(
+                getLogger(), pluginMagics::isDebugMode);
         try {
             // Plugin startup logic
             pluginMagics.setState(PRE_LOAD);
-            pluginMagics.setDebugMode(false);
+            pluginMagics.setDebugMode(PluginConstants.DEBUG_MODE);
+            pluginMagics.setDebugLogger(logger);
+            logger.info(() -> "Starting plugin in debug mode");
             moduleManager.registerDefaults(this);
             loadableRegister.register(moduleManager);
             loadableRegister.register(new MainLoadable());
@@ -75,6 +85,7 @@ public final class ChallengePlugin extends JavaPlugin {
             t.printStackTrace();
             Bukkit.getPluginManager().disablePlugin(this);
         } finally {
+            logger.info(() -> "Pre-loading completed");
             pluginMagics.setState(POST_LOAD);
         }
     }

@@ -9,7 +9,7 @@ import io.github.aparx.challenges.looping.loadable.PluginLoadable;
 import io.github.aparx.challenges.looping.loadable.modules.BlockModule;
 import io.github.aparx.challenges.looping.loadable.modules.EntityLoopModule;
 import io.github.aparx.challenges.looping.loadable.modules.SchedulerModule;
-import org.bukkit.Bukkit;
+import io.github.aparx.challenges.looping.loadable.modules.EntityModule;
 import org.bukkit.plugin.Plugin;
 
 import javax.validation.constraints.NotNull;
@@ -60,6 +60,7 @@ public class ModuleManager
         register(new SchedulerModule());
         register(new BlockModule());
         register(new EntityLoopModule(plugin));
+        register(new EntityModule(plugin));
     }
 
 }

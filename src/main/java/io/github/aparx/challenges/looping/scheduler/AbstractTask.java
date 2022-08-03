@@ -19,6 +19,24 @@ public abstract class AbstractTask extends StatePauseable {
     /* AbstractTask factory method */
 
     @NotNull
+    public static AbstractTask survivorOfChallenge(
+            final @NotNull DelegatedTask<? super AbstractTask> delegate) {
+        return delegate(RelativeDuration.CHALLENGE_INTERVAL_SURVIVOR, delegate);
+    }
+
+    @NotNull
+    public static AbstractTask instantOfChallenge(
+            final @NotNull DelegatedTask<? super AbstractTask> delegate) {
+        return delegate(RelativeDuration.CHALLENGE_DELAY_INSTANT, delegate);
+    }
+
+    @NotNull
+    public static AbstractTask instant(
+            final @NotNull DelegatedTask<? super AbstractTask> delegate) {
+        return delegate(RelativeDuration.INSTANT, delegate);
+    }
+
+    @NotNull
     public static AbstractTask delegate(
             final @NotNull RelativeDuration duration,
             final @NotNull DelegatedTask<? super AbstractTask> delegate) {
@@ -67,7 +85,8 @@ public abstract class AbstractTask extends StatePauseable {
 
     /* Abstract event methods */
 
-    protected void onUpdate() {}
+    protected void onUpdate() {
+    }
 
     abstract protected void onStart();
 
@@ -94,7 +113,10 @@ public abstract class AbstractTask extends StatePauseable {
 
     public synchronized final void updateTask() {
         if (!isStarted() || isPaused()) return;
-        if (!hasCallsLeft()) { stop(); return; }
+        if (!hasCallsLeft()) {
+            stop();
+            return;
+        }
         if (!duration.isMatchingCycle(++ticksAlive)) return;
         // We use methods to give the possibility of overriding the
         // behaviour. Scheduled for change, due to pass by value cost. TODO

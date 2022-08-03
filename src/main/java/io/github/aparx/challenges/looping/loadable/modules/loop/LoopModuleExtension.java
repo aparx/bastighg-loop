@@ -8,16 +8,18 @@ import io.github.aparx.challenges.looping.loadable.ChallengeModule;
 import io.github.aparx.challenges.looping.loadable.modules.SchedulerModule;
 import io.github.aparx.challenges.looping.scheduler.GameScheduler;
 import lombok.Getter;
-import org.bukkit.Bukkit;
+import org.apache.commons.lang3.StringUtils;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.ArmorStand;
-import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Entity;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.Plugin;
 
+import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -25,16 +27,16 @@ import java.util.concurrent.ConcurrentHashMap;
  * @version 08:13 CET, 02.08.2022
  * @since 1.0
  */
-public abstract class LoopModule<T extends LoopEntity>
+public abstract class LoopModuleExtension<T extends LoopEntity>
         extends ChallengeModule {
 
     @NotNull
-    private final Map<Integer, T> entities = new ConcurrentHashMap<>();
+    private final Map<UUID, T> entities = new ConcurrentHashMap<>();
 
     @NotNull @Getter
     private final String metadataKey;
 
-    public LoopModule(final @NotNull String metadataKey) {
+    public LoopModuleExtension(final @NotNull String metadataKey) {
         this.metadataKey = Preconditions.checkNotNull(metadataKey);
     }
 
@@ -43,8 +45,30 @@ public abstract class LoopModule<T extends LoopEntity>
     abstract public T allocateEntity(@NotNull ArmorStand armorStand);
 
     @NotNull
-    public final Map<Integer, T> getEntities() {
+    public final Map<UUID, T> getEntities() {
         return entities;
+    }
+
+    @Nullable
+    public T getLinkedEntityFrom(Entity entity) {
+        String name = entity.getCustomName();
+        if (StringUtils.isEmpty(name)) return null;
+        try {
+            UUID uuid = UUID.fromString(name);
+            if (!hasEntity(uuid)) return null;
+            return getEntity(uuid);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public synchronized final boolean hasEntity(UUID entityId) {
+        return entities.containsKey(entityId);
+    }
+
+    @NotNull
+    public synchronized final T getEntity(UUID entityId) {
+        return Preconditions.checkNotNull(entities.get(entityId));
     }
 
     @CanIgnoreReturnValue
@@ -61,19 +85,21 @@ public abstract class LoopModule<T extends LoopEntity>
     public synchronized boolean invalidateEntity(ArmorStand entity) {
         // Called to try to invalidate an armorstand-entity
         if (entity == null) return false;
-        if (!entities.containsKey(entity.getEntityId()))
+        if (!entities.containsKey(entity.getUniqueId()))
             return false;
-        T decorator = entities.get(entity.getEntityId());
+        T decorator = entities.get(entity.getUniqueId());
         if (decorator == null || !decorator.tryUnload()) return false;
         return invalidateEntity(decorator);
     }
 
     @CanIgnoreReturnValue
-    public synchronized boolean spawnAndRegister(
+    public synchronized T spawnAndRegister(
             final @NotNull Plugin plugin,
             final @NotNull Location location) {
         ArmorStand entity = spawnNewEntity(plugin, location);
-        return introduceEntity(allocateEntity(entity));
+        T t = allocateEntity(entity);
+        introduceEntity(t);
+        return t;
     }
 
     @CanIgnoreReturnValue
@@ -82,6 +108,7 @@ public abstract class LoopModule<T extends LoopEntity>
         // again and stored in temporary memory
         registerEntity(entity);
         //Bukkit.broadcastMessage("§bintroduce " + entity);
+        System.out.println("introduce " + entity.getTemporaryId());
         return entity.attachToGameLoop(getScheduler());
     }
 
@@ -91,21 +118,22 @@ public abstract class LoopModule<T extends LoopEntity>
         // clearing overall memory and giving the GC the ability
         // to cleanup
         if (!unregisterEntity(entity)) return false;
+        System.out.println("invalidate " + entity.getTemporaryId());
         //Bukkit.broadcastMessage("§cinvalidate " + entity);
         return entity.detachFromGameLoop(getScheduler());
     }
 
     @CanIgnoreReturnValue
     public synchronized boolean registerEntity(@NotNull T entity) {
-        if (entities.containsKey(entity.getEntityId()))
+        if (entities.containsKey(entity.getUniqueId()))
             return false;
-        entities.put(entity.getEntityId(), entity);
+        entities.put(entity.getUniqueId(), entity);
         return true;
     }
 
     @CanIgnoreReturnValue
     public synchronized boolean unregisterEntity(@NotNull T entity) {
-        return entities.remove(entity.getEntityId(), entity);
+        return entities.remove(entity.getUniqueId(), entity);
     }
 
     @NotNull
@@ -116,18 +144,18 @@ public abstract class LoopModule<T extends LoopEntity>
         Preconditions.checkNotNull(location);
         World world = location.getWorld();
         Preconditions.checkNotNull(world);
-        ArmorStand e = (ArmorStand) world.spawnEntity(location, EntityType.ARMOR_STAND);
-        if (PluginConstants.DEBUG_MODE) {
-            e.setCustomNameVisible(true);
-        }
-        e.setInvisible(true);
-        e.setInvulnerable(true);
-        e.setAbsorptionAmount(Double.MAX_VALUE);
-        e.setGravity(false);
-        e.setSmall(true);
-        e.setCollidable(false);
-        e.setMetadata(getMetadataKey(), new FixedMetadataValue(plugin, true));
-        return e;
+        return world.spawn(location, ArmorStand.class, e -> {
+            e.setInvisible(!PluginConstants.DEBUG_MODE);
+            e.setInvulnerable(true);
+            e.setAbsorptionAmount(Double.MAX_VALUE);
+            e.setGravity(false);
+            e.setSmall(true);
+            e.setCollidable(false);
+            if (PluginConstants.DEBUG_MODE) {
+                e.setCustomNameVisible(true);
+            }
+            e.setMetadata(getMetadataKey(), new FixedMetadataValue(plugin, true));
+        });
     }
 
     /* Internal event overloads */

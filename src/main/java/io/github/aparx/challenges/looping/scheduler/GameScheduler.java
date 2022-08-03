@@ -53,7 +53,14 @@ public class GameScheduler extends AbstractTask {
     @Override
     protected synchronized void onUpdate() {
         // Notifies all the children of the updates
-        children.forEach((id, task) -> task.updateTask());
+        children.forEach((id, task) -> {
+            if (!task.isStarted()) {
+                // detaches task as it is stopped
+                detach(task);
+                return;
+            }
+            task.updateTask();
+        });
     }
 
     @Override

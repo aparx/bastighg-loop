@@ -1,9 +1,7 @@
 package io.github.aparx.challenges.looping.loadable.modules;
 
 import io.github.aparx.challenges.looping.loadable.ChallengeModule;
-import io.github.aparx.challenges.looping.scheduler.AbstractTask;
 import io.github.aparx.challenges.looping.scheduler.GameScheduler;
-import io.github.aparx.challenges.looping.scheduler.RelativeDuration;
 import org.bukkit.plugin.Plugin;
 
 /**
@@ -19,6 +17,10 @@ public class SchedulerModule extends ChallengeModule {
     public void onLoad(Plugin plugin) throws Throwable {
         mainScheduler = new GameScheduler(plugin);
         mainScheduler.start();
+        /*mainScheduler.attach(AbstractTask.delegate(RelativeDuration.ofSurvivor(10), task -> {
+            EntityLoopModule instance = ChallengePlugin.getModules().getInstance(EntityLoopModule.class);
+            System.out.println(instance.get(TNTLoopModule.class).getEntities().size());
+        }));*/
     }
 
     @Override

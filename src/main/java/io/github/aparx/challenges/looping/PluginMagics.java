@@ -1,5 +1,6 @@
 package io.github.aparx.challenges.looping;
 
+import io.github.aparx.challenges.looping.logger.DebugLogger;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -15,6 +16,9 @@ public final class PluginMagics {
 
     @Getter @Setter
     private State state;
+
+    @Getter @Setter
+    private DebugLogger debugLogger;
 
     public boolean isState(State test) {
         return getState() == test;

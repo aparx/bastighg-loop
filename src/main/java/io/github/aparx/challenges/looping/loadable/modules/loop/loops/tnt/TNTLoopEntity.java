@@ -1,14 +1,23 @@
 package io.github.aparx.challenges.looping.loadable.modules.loop.loops.tnt;
 
+import io.github.aparx.challenges.looping.PluginConstants;
+import io.github.aparx.challenges.looping.loadable.modules.block.CapturedBlockData;
+import io.github.aparx.challenges.looping.loadable.modules.block.CapturedStructure;
 import io.github.aparx.challenges.looping.loadable.modules.loop.LoopEntity;
-import io.github.aparx.challenges.looping.loadable.modules.loop.LoopEntityMetadata;
-import io.github.aparx.challenges.looping.loadable.modules.loop.LoopModule;
-import org.bukkit.Bukkit;
+import io.github.aparx.challenges.looping.loadable.modules.loop.LoopModuleExtension;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.World;
+import org.bukkit.block.Block;
 import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.TNTPrimed;
 
-import javax.annotation.CheckForNull;
-import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
+import java.util.ArrayList;
+import java.util.List;
+
+// TODO chunk bug, as soon as the chunk is unloaded but a primed
+//  tnt is still running, it will destroy the blocks whose will not be reset
 
 /**
  * @author aparx (Vinzent Zeband)
@@ -19,16 +28,23 @@ public class TNTLoopEntity extends LoopEntity {
 
     private boolean loopDone = false;
 
+    private CapturedStructure blockCache;
+
+    public static final long INTERVAL_TIME
+            = PluginConstants.CHALLENGE_INTERVAL + 80 /* default fuse time */;
+
     public TNTLoopEntity(
             final @NotNull ArmorStand entity,
-            final @NotNull LoopModule<?> module) {
-        super(entity, module, module.allocateMetadata(entity));
+            final @NotNull LoopModuleExtension<?> module) {
+        super(entity, module,
+                module.allocateMetadata(entity),
+                /* running 10 times in INTERVAL_TIME */
+                INTERVAL_TIME / 10);
     }
 
-
     @Override
-    protected void onLoop() {
-        loopDone = true;
+    protected long getIntervalTime() {
+        return INTERVAL_TIME;
     }
 
     @Override
@@ -38,12 +54,40 @@ public class TNTLoopEntity extends LoopEntity {
     }
 
     @Override
-    protected void onUpdate() {
-        if (loopDone && getCallAmount() > 0) {
-            // TODO spawn tnt
+    protected synchronized void onLoop() {
+        loopDone = true;
+        if (blockCache != null) {
+            // Replace the cached blocks
+            blockCache.placeCapture();
+            blockCache = null;
+        }
+    }
+
+    @Override
+    protected synchronized void onUpdate() {
+        ArmorStand entity = getEntityReference();
+        if (entity == null) return;
+        if (loopDone && getCallAmount() > 1) {
             loopDone = false;
+            Location location = entity.getLocation();
+            World world = location.getWorld();
+            if (world == null) return;
+            world.spawn(location, TNTPrimed.class, this::linkEntityToThis);
         }
         super.onUpdate();
+    }
+
+    public synchronized void updateResetBlocks(List<Block> blockList) {
+        if (blockCache != null) blockCache.placeCapture();
+        ArrayList<CapturedBlockData> data = new ArrayList<>(blockList.size());
+        blockList.forEach(block -> {
+            // exclude other TNT blocks from it, as they will automatically
+            // be registered from the subsystem
+            if (block.getType() == Material.TNT) return;
+            data.add(CapturedBlockData.capture(block));
+        });
+        data.trimToSize();
+        blockCache = CapturedStructure.of(data);
     }
 
     @Override

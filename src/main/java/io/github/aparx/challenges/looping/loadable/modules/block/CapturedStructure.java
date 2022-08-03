@@ -1,10 +1,10 @@
 package io.github.aparx.challenges.looping.loadable.modules.block;
 
 import com.google.common.base.Preconditions;
+import io.github.aparx.challenges.looping.utils.EffectPlayer;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.Location;
-import org.bukkit.Particle;
 import org.bukkit.World;
 import org.bukkit.block.data.BlockData;
 
@@ -29,7 +29,7 @@ public final class CapturedStructure {
     @NotNull
     public static CapturedStructure of(
             final @NotNull CapturedBlockData blockData) {
-        return of(blockData, EffectPlayer.CLOUD_PLAYER);
+        return of(blockData, EffectPlayer.BLOCK_CLOUD_PLAYER);
     }
 
     @NotNull
@@ -43,7 +43,7 @@ public final class CapturedStructure {
     @NotNull
     public static CapturedStructure of(
             final @NotNull Collection<@NotNull CapturedBlockData> blockData) {
-        return of(blockData, EffectPlayer.CLOUD_PLAYER);
+        return of(blockData, EffectPlayer.BLOCK_CLOUD_PLAYER);
     }
 
     @NotNull
@@ -101,7 +101,7 @@ public final class CapturedStructure {
             world.setBlockData(posX, posY, posZ, newData);
             if (playEffect && effectPlayer != null) {
                 // Now we play the visual effect as it is wanted behaviour
-                effectPlayer.playParticle(world, posX, posY, posZ);
+                effectPlayer.playParticles(world, posX, posY, posZ);
             }
         }
     }
@@ -138,20 +138,6 @@ public final class CapturedStructure {
                 "blockData=" + blockData +
                 ", effectPlayer=" + effectPlayer +
                 '}';
-    }
-
-    /**
-     * Functional interface used to spawn a data placement particle.
-     */
-    @FunctionalInterface
-    public interface EffectPlayer {
-
-        EffectPlayer CLOUD_PLAYER = (world, posX, posY, posZ) -> {
-            // Spawns a new cloud particle horizontally centered
-            world.spawnParticle(Particle.CLOUD, posX + .5, posY + 1, posZ + .5, 2, 0, 0, 0, 0, null, false);
-        };
-
-        void playParticle(@NotNull World world, int posX, int posY, int posZ);
     }
 
 }

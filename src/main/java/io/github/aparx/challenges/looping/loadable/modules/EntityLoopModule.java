@@ -4,15 +4,13 @@ import com.google.common.base.Preconditions;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import io.github.aparx.challenges.looping.LoadableRegister;
 import io.github.aparx.challenges.looping.loadable.ChallengeModule;
-import io.github.aparx.challenges.looping.loadable.ListenerLoadable;
-import io.github.aparx.challenges.looping.loadable.modules.loop.LoopModule;
+import io.github.aparx.challenges.looping.loadable.modules.loop.LoopModuleExtension;
+import io.github.aparx.challenges.looping.loadable.modules.loop.loops.projectile.ProjectileLoopModule;
 import io.github.aparx.challenges.looping.loadable.modules.loop.loops.tnt.TNTLoopModule;
 import lombok.Getter;
 import org.apache.commons.lang3.ArrayUtils;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.EntityType;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.world.ChunkLoadEvent;
@@ -24,11 +22,12 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
-import java.util.function.Consumer;
 
 /**
+ * Register module responsible for managing, maintaining and updating loops
+ * based upon the {@code LoopEntity}.
+ *
  * @author aparx (Vinzent Zeband)
  * @version 16:14 CET, 01.08.2022
  * @since 1.0
@@ -38,7 +37,7 @@ public class EntityLoopModule
         implements Listener {
 
     @SuppressWarnings("rawtypes")
-    private final Map<Class<? extends LoopModule>, LoopModule<?>>
+    private final Map<Class<? extends LoopModuleExtension>, LoopModuleExtension<?>>
             LOOPS = new ConcurrentHashMap<>();
 
     @NotNull @Getter
@@ -51,10 +50,11 @@ public class EntityLoopModule
 
     public void registerDefaults() {
         register(new TNTLoopModule());
+        register(new ProjectileLoopModule(getPlugin()));
     }
 
     @SuppressWarnings("unchecked")
-    public synchronized <T extends LoopModule<?>>
+    public synchronized <T extends LoopModuleExtension<?>>
     T get(final @NotNull Class<T> ofType) {
         return (T) Preconditions.checkNotNull(LOOPS.get(ofType));
     }
@@ -62,8 +62,8 @@ public class EntityLoopModule
     @CanIgnoreReturnValue
     @SuppressWarnings("rawtypes")
     public synchronized boolean unregister(
-            final @NotNull Class<? extends LoopModule> module) {
-        LoopModule<?> value = LOOPS.remove(module);
+            final @NotNull Class<? extends LoopModuleExtension> module) {
+        LoopModuleExtension<?> value = LOOPS.remove(module);
         if (value == null) return false;
         LoadableRegister.handleLoadAction(() -> value.unload(getPlugin()));
         return true;
@@ -71,8 +71,8 @@ public class EntityLoopModule
 
     @CanIgnoreReturnValue
     public synchronized boolean register(
-            final @NotNull LoopModule<?> module) {
-        LoopModule<?> mod = LOOPS.get(module.getClass());
+            final @NotNull LoopModuleExtension<?> module) {
+        LoopModuleExtension<?> mod = LOOPS.get(module.getClass());
         if (mod != null) return false;
         LOOPS.put(module.getClass(), module);
         LoadableRegister.handleLoadAction(() -> module.load(getPlugin()));
@@ -97,21 +97,21 @@ public class EntityLoopModule
     /* Multi-Entity-Action methods */
 
     public void introduceEntities(@NotNull Iterator<? super ArmorStand> audience) {
-        actionOnEntities(audience, LoopModule::introduceEntity);
+        actionOnEntities(audience, LoopModuleExtension::introduceEntity);
     }
 
     public void invalidateEntities(@NotNull Iterator<? super ArmorStand> audience) {
-        actionOnEntities(audience, LoopModule::invalidateEntity);
+        actionOnEntities(audience, LoopModuleExtension::invalidateEntity);
     }
 
     public synchronized void actionOnEntities(
             final @NotNull Iterator<? super ArmorStand> audience,
-            final @NotNull BiPredicate<LoopModule<?>, ArmorStand> action) {
+            final @NotNull BiPredicate<LoopModuleExtension<?>, ArmorStand> action) {
         while (audience.hasNext()) {
             final Object next = audience.next();
             if (!(next instanceof ArmorStand)) continue;
             final ArmorStand e = (ArmorStand) next;
-            for (LoopModule<?> mod : LOOPS.values()) {
+            for (LoopModuleExtension<?> mod : LOOPS.values()) {
                 if (action.test(mod, e)) break;
             }
         }

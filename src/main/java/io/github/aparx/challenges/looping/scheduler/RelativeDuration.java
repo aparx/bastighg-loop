@@ -1,6 +1,7 @@
 package io.github.aparx.challenges.looping.scheduler;
 
 import com.google.common.base.Preconditions;
+import io.github.aparx.challenges.looping.PluginConstants;
 import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
@@ -17,6 +18,9 @@ import javax.validation.constraints.NotNull;
  */
 public final class RelativeDuration {
 
+    public static RelativeDuration INSTANT = ofInstant();
+    public static RelativeDuration CHALLENGE_INTERVAL_SURVIVOR = ofSurvivor(PluginConstants.CHALLENGE_INTERVAL);
+    public static RelativeDuration CHALLENGE_DELAY_INSTANT = ofInstant(PluginConstants.CHALLENGE_INTERVAL);
     public static RelativeDuration NODELAY_LASTING = ofSurvivor(0);
 
     /* TaskDuration factory methods */
