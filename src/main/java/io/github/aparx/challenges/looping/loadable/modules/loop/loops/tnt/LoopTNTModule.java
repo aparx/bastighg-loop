@@ -2,9 +2,11 @@ package io.github.aparx.challenges.looping.loadable.modules.loop.loops.tnt;
 
 import io.github.aparx.challenges.looping.ChallengePlugin;
 import io.github.aparx.challenges.looping.loadable.ListenerLoadable;
+import io.github.aparx.challenges.looping.loadable.modules.BlockModule;
 import io.github.aparx.challenges.looping.loadable.modules.block.CapturedStructure;
 import io.github.aparx.challenges.looping.loadable.modules.loop.MetadataWrapper;
 import io.github.aparx.challenges.looping.loadable.modules.loop.LoopModuleExtension;
+import org.bukkit.Material;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -55,7 +57,11 @@ public class LoopTNTModule
         }
         // Update later in case owner is found
         if (entity == null) return;
-        entity.updateResetBlocks(event.blockList());
+        entity.setResetBlocks(CapturedStructure.of(event.blockList(), b -> {
+            // We do not include other TNTs in the range of ours, due to
+            // them automatically being registered as looped TNTs
+            return b.getType() != Material.TNT;
+        }));
     }
 
     @Override

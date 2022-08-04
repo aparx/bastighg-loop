@@ -21,7 +21,7 @@ import java.util.Optional;
  * @version 12:16 CET, 02.08.2022
  * @since 1.0
  */
-public class MetadataWrapper {
+public final class MetadataWrapper {
 
     public static final String KEY_CALL_AMOUNT = "l_callAmount";
 
@@ -38,23 +38,23 @@ public class MetadataWrapper {
     }
 
     @CanIgnoreReturnValue
-    public final void set(String key, Object value) {
+    public void set(String key, Object value) {
         if (!containsExact(getBaseMetadataKey())) {
             writeExact(getBaseMetadataKey(), true);
         }
         writeExact(createPath(key), value);
     }
 
-    public final boolean hasBase() {
+    public boolean hasBase() {
         return containsExact(getBaseMetadataKey());
     }
 
-    public final boolean contains(String key) {
+    public boolean contains(String key) {
         return containsExact(createPath(key));
     }
 
     @SuppressWarnings("unchecked")
-    public final <E extends Enum<E>>
+    public <E extends Enum<E>>
     E getEnum(String key, Class<E> type, E defaultValue) {
         Optional<MetadataValue> metadataValue = get(key);
         if (metadataValue.isEmpty()) return defaultValue;
@@ -70,34 +70,34 @@ public class MetadataWrapper {
     }
 
     @SuppressWarnings("unchecked")
-    public final <T> T getObject(String key) {
+    public <T> T getObject(String key) {
         final Optional<MetadataValue> metadataValue = get(key);
         return (T) metadataValue.map(MetadataValue::value).orElse(null);
     }
 
     @CanIgnoreReturnValue
-    public final Optional<MetadataValue> get(String key) {
+    public Optional<MetadataValue> get(String key) {
         List<MetadataValue> metadata = entity.getMetadata(createPath(key));
         if (metadata.isEmpty()) return Optional.empty();
         return Optional.ofNullable(metadata.get(0));
     }
 
-    public final int getInt(String key) {
+    public int getInt(String key) {
         final Optional<MetadataValue> metadataValue = get(key);
         return metadataValue.map(MetadataValue::asInt).orElse(0);
     }
 
-    public final boolean getBoolean(String key) {
+    public boolean getBoolean(String key) {
         final Optional<MetadataValue> metadataValue = get(key);
         return metadataValue.map(MetadataValue::asBoolean).orElse(false);
     }
 
-    public final double getDouble(String key) {
+    public double getDouble(String key) {
         final Optional<MetadataValue> metadataValue = get(key);
         return metadataValue.map(MetadataValue::asDouble).orElse(0.0);
     }
 
-    public final long getLong(String key) {
+    public long getLong(String key) {
         final Optional<MetadataValue> metadataValue = get(key);
         return metadataValue.map(MetadataValue::asLong).orElse(0L);
     }
@@ -126,7 +126,8 @@ public class MetadataWrapper {
         return createPath(builder.toString());
     }
 
-    protected Plugin getOwningPlugin() {
+    @NotNull
+    public Plugin getOwningPlugin() {
         return ChallengePlugin.getInstance();
     }
 

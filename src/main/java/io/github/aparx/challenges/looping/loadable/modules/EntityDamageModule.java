@@ -10,14 +10,18 @@ import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.SpawnCategory;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.plugin.Plugin;
 
 import java.util.concurrent.ThreadLocalRandom;
+
+import static org.bukkit.event.entity.EntityDamageEvent.DamageCause.ENTITY_EXPLOSION;
 
 /**
  * Module responsible for continuously damaging entities after being
@@ -27,7 +31,9 @@ import java.util.concurrent.ThreadLocalRandom;
  * @version 16:28 CET, 03.08.2022
  * @since 1.0
  */
-public class EntityDamageModule extends ChallengeModule implements Listener {
+public final class EntityDamageModule
+        extends ChallengeModule
+        implements Listener {
 
     /**
      * After {@code 100} iterations in which an entity is damaged because
@@ -46,7 +52,12 @@ public class EntityDamageModule extends ChallengeModule implements Listener {
         Class<? extends Entity> type = entity.getType().getEntityClass();
         if (type == null) return;
         Player killer = entity.getKiller();
-        if (killer == null) return;
+        if (killer == null) {
+            // Include entities whose death is through an explosion
+            var lastDamage = entity.getLastDamageCause();
+            if (isNonProcessableEventOrMoment(lastDamage)) return;
+            if (lastDamage.getCause() != ENTITY_EXPLOSION) return;
+        }
         final Location location = entity.getLocation().clone();
         SchedulerModule module = ChallengePlugin.getScheduler();
         GameScheduler scheduler = module.getMainScheduler();

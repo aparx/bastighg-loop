@@ -53,6 +53,7 @@ public abstract class ChallengeModule
     }
 
     public boolean isNonProcessableEventOrMoment(@Nullable Object event) {
+        if (event == null) return true;
         return isPaused() || event instanceof Cancellable
                 && ((Cancellable) event).isCancelled();
     }

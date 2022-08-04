@@ -1,20 +1,16 @@
 package io.github.aparx.challenges.looping.loadable.modules.loop.loops.tnt;
 
 import io.github.aparx.challenges.looping.PluginConstants;
-import io.github.aparx.challenges.looping.loadable.modules.block.CapturedBlockData;
+import io.github.aparx.challenges.looping.loadable.modules.BlockModule;
 import io.github.aparx.challenges.looping.loadable.modules.block.CapturedStructure;
 import io.github.aparx.challenges.looping.loadable.modules.loop.LoopEntity;
 import io.github.aparx.challenges.looping.loadable.modules.loop.LoopModuleExtension;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.World;
-import org.bukkit.block.Block;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.TNTPrimed;
 
 import javax.validation.constraints.NotNull;
-import java.util.ArrayList;
-import java.util.List;
 
 // TODO chunk bug, as soon as the chunk is unloaded but a primed
 //  tnt is still running, it will destroy the blocks whose will not be reset
@@ -44,6 +40,7 @@ public class LoopTNTEntity extends LoopEntity {
 
     @Override
     public void onInvalidate() {
+        super.onInvalidate();
         // Since we left the chunk, or this entity got invalidated
         // whilst we still have blocks to reset, we do them immediately.
         if (blockCache == null) return;
@@ -68,6 +65,7 @@ public class LoopTNTEntity extends LoopEntity {
         if (blockCache != null) {
             // Replace the cached blocks
             blockCache.placeCapture();
+            BlockModule.freeAll(blockCache.locationSet());
             blockCache = null;
         }
     }
@@ -86,17 +84,11 @@ public class LoopTNTEntity extends LoopEntity {
         super.onUpdate();
     }
 
-    public synchronized void updateResetBlocks(List<Block> blockList) {
-        if (blockCache != null) blockCache.placeCapture();
-        ArrayList<CapturedBlockData> data = new ArrayList<>(blockList.size());
-        blockList.forEach(block -> {
-            // exclude other TNT blocks from it, as they will automatically
-            // be registered from the subsystem
-            if (block.getType() == Material.TNT) return;
-            data.add(CapturedBlockData.capture(block));
-        });
-        data.trimToSize();
-        blockCache = CapturedStructure.of(data);
+    public void setResetBlocks(CapturedStructure blockCache) {
+        if (this.blockCache != null)
+            this.blockCache.placeCapture();
+        this.blockCache = blockCache;
+        BlockModule.occupyAll(blockCache.locationSet());
     }
 
     @Override

@@ -2,6 +2,9 @@ package io.github.aparx.challenges.looping.loadable.modules.loop;
 
 import com.google.common.base.Preconditions;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import io.github.aparx.challenges.looping.ChallengePlugin;
+import io.github.aparx.challenges.looping.PluginConstants;
+import io.github.aparx.challenges.looping.logger.DebugLogger;
 import io.github.aparx.challenges.looping.scheduler.AbstractTask;
 import io.github.aparx.challenges.looping.scheduler.GameScheduler;
 import io.github.aparx.challenges.looping.scheduler.RelativeDuration;
@@ -67,7 +70,19 @@ public abstract class LoopEntity extends AbstractTask {
     protected void onDied() {
         getModule().invalidateEntity(this);
     }
-    public void onInvalidate() {}
+
+    protected void onIntroduce() {
+        if (!PluginConstants.DEBUG_MODE) return;
+        DebugLogger debugLogger = ChallengePlugin.getDebugLogger();
+        debugLogger.info("Introducing %s (%s)",
+                getClass().getSimpleName(), getUniqueId());
+    }
+    protected void onInvalidate() {
+        if (!PluginConstants.DEBUG_MODE) return;
+        DebugLogger debugLogger = ChallengePlugin.getDebugLogger();
+        debugLogger.info("Invalidating %s (%s)",
+                getClass().getSimpleName(), getUniqueId());
+    }
 
     @Override
     protected void onUpdate() {
@@ -165,7 +180,6 @@ public abstract class LoopEntity extends AbstractTask {
         return Preconditions.checkNotNull(getEntity());
     }
 
-    @Nullable
     public ArmorStand getEntity() {
         return entityReference.get();
     }

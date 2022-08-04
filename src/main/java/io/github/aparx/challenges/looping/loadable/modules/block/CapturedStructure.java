@@ -6,14 +6,15 @@ import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;
 
 import javax.annotation.Nullable;
+import javax.annotation.concurrent.NotThreadSafe;
 import javax.validation.constraints.NotNull;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 /**
  * A decorator containing a collection of {@code CapturedBlockData}, used
@@ -25,7 +26,33 @@ import java.util.function.Consumer;
  */
 public final class CapturedStructure {
 
-    public static final CapturedStructure EMPTY = of(List.of());
+    public static final CapturedStructure EMPTY = of(List.<CapturedBlockData>of());
+
+    @NotNull
+    public static CapturedStructure of(
+            final @Nullable List<Block> blockList) {
+        return of(blockList, null);
+    }
+
+    @NotNull
+    public static CapturedStructure of(
+            final @Nullable List<Block> blockList,
+            @Nullable Predicate<Block> blockPredicate) {
+        if (blockList == null || blockList.isEmpty())
+            return CapturedStructure.EMPTY;
+        // Try and convert all blocks to captured block-data
+        ArrayList<CapturedBlockData> data = new ArrayList<>(blockList.size());
+        blockList.forEach(block -> {
+            if (block == null) return;
+            // exclude other blocks that are specified in the predicate
+            if (blockPredicate != null
+                    && !blockPredicate.test(block))
+                return;
+            data.add(CapturedBlockData.capture(block));
+        });
+        data.trimToSize();
+        return CapturedStructure.of(data);
+    }
 
     @NotNull
     public static CapturedStructure of(
@@ -59,6 +86,9 @@ public final class CapturedStructure {
     @NotNull
     private final Collection<@NotNull CapturedBlockData> blockData;
 
+    @NotNull
+    private final Set<Location> locationSet;
+
     @Nullable @Getter @Setter
     private EffectPlayer effectPlayer;
 
@@ -66,11 +96,22 @@ public final class CapturedStructure {
             final @NotNull Collection<@NotNull CapturedBlockData> blockData,
             final @Nullable EffectPlayer effectPlayer) {
         this.blockData = Preconditions.checkNotNull(blockData);
+        Set<Location> locations = new HashSet<>(blockData.size());
+        for (CapturedBlockData data : blockData) {
+            if (data == null) continue;
+            locations.add(data.getLocation());
+        }
+        this.locationSet = Collections.unmodifiableSet(locations);
         this.effectPlayer = effectPlayer;
     }
 
     public boolean isEmpty() {
         return blockData.isEmpty();
+    }
+
+    @NotNull
+    public Set<Location> locationSet() {
+        return locationSet;
     }
 
     /* passive operations */
@@ -115,6 +156,7 @@ public final class CapturedStructure {
             if (action != null)
                 action.accept(location);
         }
+        blockData.clear();
     }
 
     /* non-mutating operations */

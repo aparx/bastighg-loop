@@ -108,6 +108,7 @@ public abstract class AbstractTask extends StatePauseable {
         if (!isStarted()) return false;
         isStarted = false;
         onStop();
+        setTicksAlive(0);
         return !isStarted();
     }
 

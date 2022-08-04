@@ -19,6 +19,7 @@ import org.bukkit.plugin.Plugin;
 
 import javax.validation.constraints.NotNull;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -32,13 +33,13 @@ import java.util.function.BiPredicate;
  * @version 16:14 CET, 01.08.2022
  * @since 1.0
  */
-public class EntityLoopModule
+public final class EntityLoopModule
         extends ChallengeModule
         implements Listener {
 
     @SuppressWarnings("rawtypes")
     private final Map<Class<? extends LoopModuleExtension>, LoopModuleExtension<?>>
-            LOOPS = new ConcurrentHashMap<>();
+            loops = new ConcurrentHashMap<>();
 
     @NotNull @Getter
     private final Plugin plugin;
@@ -53,17 +54,21 @@ public class EntityLoopModule
         register(new LoopProjectileModule(getPlugin()));
     }
 
+    public Map<Class<? extends LoopModuleExtension>, LoopModuleExtension<?>> getLoops() {
+        return Collections.unmodifiableMap(loops);
+    }
+
     @SuppressWarnings("unchecked")
     public synchronized <T extends LoopModuleExtension<?>>
     T get(final @NotNull Class<T> ofType) {
-        return (T) Preconditions.checkNotNull(LOOPS.get(ofType));
+        return (T) Preconditions.checkNotNull(loops.get(ofType));
     }
 
     @CanIgnoreReturnValue
     @SuppressWarnings("rawtypes")
     public synchronized boolean unregister(
             final @NotNull Class<? extends LoopModuleExtension> module) {
-        LoopModuleExtension<?> value = LOOPS.remove(module);
+        LoopModuleExtension<?> value = loops.remove(module);
         if (value == null) return false;
         LoadableRegister.handleLoadAction(() -> value.unload(getPlugin()));
         return true;
@@ -72,16 +77,16 @@ public class EntityLoopModule
     @CanIgnoreReturnValue
     public synchronized boolean register(
             final @NotNull LoopModuleExtension<?> module) {
-        LoopModuleExtension<?> mod = LOOPS.get(module.getClass());
+        LoopModuleExtension<?> mod = loops.get(module.getClass());
         if (mod != null) return false;
-        LOOPS.put(module.getClass(), module);
+        loops.put(module.getClass(), module);
         LoadableRegister.handleLoadAction(() -> module.load(getPlugin()));
         return true;
     }
 
     @Override
     public void onLoad(Plugin plugin) throws Throwable {
-        LOOPS.forEach((aClass, module) -> {
+        loops.forEach((aClass, module) -> {
             // Load individual modules first, in case they were not
             // removed already within #onUnload() or added later
             LoadableRegister.handleLoadAction(() -> module.load(plugin));
@@ -91,7 +96,7 @@ public class EntityLoopModule
 
     @Override
     public void onUnload(Plugin plugin) throws Throwable {
-        LOOPS.forEach((aClass, module) -> unregister(aClass));
+        loops.forEach((aClass, module) -> unregister(aClass));
     }
 
     /* Multi-Entity-Action methods */
@@ -111,7 +116,7 @@ public class EntityLoopModule
             final Object next = audience.next();
             if (!(next instanceof ArmorStand)) continue;
             final ArmorStand e = (ArmorStand) next;
-            for (LoopModuleExtension<?> mod : LOOPS.values()) {
+            for (LoopModuleExtension<?> mod : loops.values()) {
                 if (action.test(mod, e)) break;
             }
         }

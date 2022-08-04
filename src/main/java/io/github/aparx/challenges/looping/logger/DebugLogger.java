@@ -52,9 +52,21 @@ public abstract class DebugLogger {
         }
     }
 
+    public void log(Level level, Object o, Object... args) {
+        if (isDebugMode()) {
+            logger.log(level, objectToString(o), args);
+        }
+    }
+
     public void warning(Supplier<?> msgSupplier) {
         if (isDebugMode()) {
             logger.info(() -> objectToString(msgSupplier));
+        }
+    }
+
+    public void warning(Object o) {
+        if (isDebugMode()) {
+            logger.info(() -> objectToString(o));
         }
     }
 
@@ -64,12 +76,26 @@ public abstract class DebugLogger {
         }
     }
 
+    public void info(Object o) {
+        if (isDebugMode()) {
+            logger.info(() -> objectToString(o));
+        }
+    }
+
     public void warning(Supplier<?> msgSupplier, Object... args) {
         warning(() -> formatObjectToString(msgSupplier, args));
     }
 
+    public void warning(Object o, Object... args) {
+        warning(formatObjectToString(o, args));
+    }
+
     public void info(Supplier<?> msgSupplier, Object... args) {
         info(() -> formatObjectToString(msgSupplier, args));
+    }
+
+    public void info(Object o, Object... args) {
+        info(formatObjectToString(o, args));
     }
 
     private static String typeErasedArrayToString(Object o) {
