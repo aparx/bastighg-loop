@@ -7,16 +7,23 @@ import io.github.aparx.challenges.looping.loadable.modules.block.BlockStructures
 import io.github.aparx.challenges.looping.loadable.modules.block.CapturedBlockData;
 import io.github.aparx.challenges.looping.loadable.modules.block.CapturedStructure;
 import io.github.aparx.challenges.looping.scheduler.AbstractTask;
+import io.github.aparx.challenges.looping.scheduler.DelegatedTask;
 import io.github.aparx.challenges.looping.scheduler.GameScheduler;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.data.BlockData;
+import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.*;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.Plugin;
 
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
@@ -48,15 +55,26 @@ public final class BlockModule extends ChallengeModule implements Listener {
      */
     public static void lateStructurePlacement(
             final @NotNull CapturedStructure structure,
-            final @Nullable Cancellable event) {
+            final @Nullable Cancellable event,
+            boolean dropItems) {
         if (structure.isEmpty()) return;
         if (!occupyAll(structure.locationSet())) return;
-        SchedulerModule schedulerModule = ChallengePlugin.getScheduler();
-        GameScheduler scheduler = schedulerModule.getMainScheduler();
-        scheduler.attach(AbstractTask.instantOfChallenge(task -> {
+        SchedulerModule schedulerModule = ChallengePlugin.getSchedulers();
+        GameScheduler scheduler = schedulerModule.getPrimaryScheduler();
+        scheduler.attach(AbstractTask.instantOfChallenge(DelegatedTask.ofStop(task -> {
             if (event != null && event.isCancelled()) return;
-            structure.placeCapture(OCCUPIED_BLOCKS::remove);
-        }));
+            structure.placeCapture((e, willDataBeUpdated) -> {
+                final Location location = e.getLocation();
+                OCCUPIED_BLOCKS.remove(location);
+                if (!willDataBeUpdated || !dropItems) return;
+                final World world = location.getWorld();
+                if (world == null) return;
+                BlockData current = world.getBlockData(location);
+                Material material = current.getMaterial();
+                if (material == Material.AIR) return;
+                world.dropItemNaturally(location, new ItemStack(material));
+            });
+        })));
     }
 
     public static boolean isOccupied(Location location) {
@@ -97,7 +115,7 @@ public final class BlockModule extends ChallengeModule implements Listener {
         Location location = blockReplacedState.getLocation();
         var struct = BlockStructures.getAffectedBlocks(event.getBlock(), false);
         struct = struct.add(CapturedBlockData.capture(location, blockData));
-        lateStructurePlacement(struct, event);
+        lateStructurePlacement(struct, event, shouldDropBlocks(event.getPlayer()));
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
@@ -105,8 +123,16 @@ public final class BlockModule extends ChallengeModule implements Listener {
         if (isNonProcessableEventOrMoment(event)) return;
         Block block = event.getBlock();
         // TODO how do multi-structures behave with this set?
-        Location location = block.getLocation();
-        lateStructurePlacement(BlockStructures.getAffectedBlocks(block, true), event);
+        lateStructurePlacement(BlockStructures.getAffectedBlocks(block, true), event, false);
     }
 
+    public boolean shouldDropBlocks(Player player) {
+        if (player == null) return false;
+        return player.getGameMode() == GameMode.SURVIVAL;
+    }
+
+    @Override
+    protected synchronized void onUnload(Plugin plugin) throws Throwable {
+        OCCUPIED_BLOCKS.clear();
+    }
 }

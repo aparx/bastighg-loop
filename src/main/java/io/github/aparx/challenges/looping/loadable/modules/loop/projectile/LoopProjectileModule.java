@@ -5,7 +5,6 @@ import io.github.aparx.challenges.looping.loadable.modules.block.CapturedStructu
 import io.github.aparx.challenges.looping.loadable.modules.loop.LoopModuleExtension;
 import io.github.aparx.challenges.looping.loadable.modules.loop.MetadataWrapper;
 import lombok.Getter;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;

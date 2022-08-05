@@ -1,8 +1,7 @@
-package io.github.aparx.challenges.looping.loadable.modules.loop.loops.tnt;
+package io.github.aparx.challenges.looping.loadable.modules.loop.tnt;
 
 import io.github.aparx.challenges.looping.ChallengePlugin;
 import io.github.aparx.challenges.looping.loadable.ListenerLoadable;
-import io.github.aparx.challenges.looping.loadable.modules.BlockModule;
 import io.github.aparx.challenges.looping.loadable.modules.block.CapturedStructure;
 import io.github.aparx.challenges.looping.loadable.modules.loop.MetadataWrapper;
 import io.github.aparx.challenges.looping.loadable.modules.loop.LoopModuleExtension;

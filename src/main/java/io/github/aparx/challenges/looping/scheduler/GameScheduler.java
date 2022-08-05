@@ -82,6 +82,16 @@ public class GameScheduler extends AbstractTask {
         onScheduleStop();
     }
 
+    @Override
+    protected synchronized void onPause() {
+        children.forEach((id, task) -> task.setPaused(true));
+    }
+
+    @Override
+    protected synchronized void onResume() {
+        children.forEach((id, task) -> task.setPaused(false));
+    }
+
     /* Child-operations */
 
     @CanIgnoreReturnValue

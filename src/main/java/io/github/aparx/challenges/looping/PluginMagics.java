@@ -15,16 +15,36 @@ public final class PluginMagics {
     private boolean isDebugMode;
 
     @Getter @Setter
-    private State state;
+    private PluginState state;
 
     @Getter @Setter
     private DebugLogger debugLogger;
 
-    public boolean isState(State test) {
+    volatile private GameState gameState;
+
+    public boolean isState(PluginState test) {
         return getState() == test;
     }
 
-    public enum State {
+    public synchronized void setGameState(GameState gameState) {
+        this.gameState = gameState;
+    }
+
+    public synchronized GameState getGameState() {
+        return gameState;
+    }
+
+    public boolean isGameState(GameState state) {
+        return getGameState() == state;
+    }
+
+    public enum GameState {
+        STARTED,
+        STOPPED,
+        PAUSED
+    }
+
+    public enum PluginState {
         PRE_LOAD,
         POST_LOAD
     }

@@ -16,6 +16,8 @@ public interface PluginLoadable {
      *
      * @param plugin The plugin causing the loading.
      * @throws Throwable if an error occurred
+     * @apiNote It is not guaranteed that this method is not called more
+     * than once, even if this loadable is loaded already.
      */
     void load(@NotNull Plugin plugin) throws Throwable;
 
@@ -24,6 +26,8 @@ public interface PluginLoadable {
      *
      * @param plugin The plugin causing the unloading.
      * @throws Throwable if an error occurred
+     * @apiNote It is not guaranteed that this method is not called more
+     * than once, even if this loadable is not loaded anymore.
      */
     void unload(@NotNull Plugin plugin) throws Throwable;
 

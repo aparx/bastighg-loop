@@ -5,10 +5,11 @@ import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import io.github.aparx.challenges.looping.LoadableRegister;
 import io.github.aparx.challenges.looping.loadable.ChallengeModule;
 import io.github.aparx.challenges.looping.loadable.modules.loop.LoopModuleExtension;
-import io.github.aparx.challenges.looping.loadable.modules.loop.loops.tnt.LoopTNTModule;
+import io.github.aparx.challenges.looping.loadable.modules.loop.tnt.LoopTNTModule;
 import io.github.aparx.challenges.looping.loadable.modules.loop.projectile.LoopProjectileModule;
 import lombok.Getter;
 import org.apache.commons.lang3.ArrayUtils;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.event.EventHandler;
@@ -138,4 +139,11 @@ public final class EntityLoopModule
         invalidateEntities(Arrays.stream(entities).iterator());
     }
 
+    /**
+     * Destroys all loop entities and immediately invalidates.
+     */
+    public void killAll() {
+        Bukkit.getWorlds().forEach(world -> world.getEntitiesByClass(
+                ArmorStand.class).forEach(Entity::remove));
+    }
 }

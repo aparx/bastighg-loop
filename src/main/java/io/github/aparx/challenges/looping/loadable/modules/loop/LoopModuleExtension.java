@@ -3,12 +3,10 @@ package io.github.aparx.challenges.looping.loadable.modules.loop;
 import com.google.common.base.Preconditions;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import io.github.aparx.challenges.looping.ChallengePlugin;
-import io.github.aparx.challenges.looping.PluginConstants;
 import io.github.aparx.challenges.looping.loadable.ChallengeModule;
 import io.github.aparx.challenges.looping.loadable.modules.SchedulerModule;
 import io.github.aparx.challenges.looping.scheduler.GameScheduler;
 import lombok.Getter;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.ArmorStand;
@@ -118,7 +116,7 @@ public abstract class LoopModuleExtension<T extends LoopEntity>
         // `entity` is (re-)introduced, thus attached to the game-loop
         // again and stored in temporary memory
         registerEntity(entity);
-        //System.out.println("introduce " + entity.getUniqueId());
+        entity.onIntroduce();
         return entity.attachToGameLoop(getScheduler());
     }
 
@@ -128,7 +126,6 @@ public abstract class LoopModuleExtension<T extends LoopEntity>
         // clearing overall memory and giving the GC the ability
         // to cleanup
         if (!unregisterEntity(entity)) return false;
-        //System.out.println("invalidate " + entity.getUniqueId());
         entity.onInvalidate();
         return entity.detachFromGameLoop(getScheduler());
     }
@@ -193,7 +190,7 @@ public abstract class LoopModuleExtension<T extends LoopEntity>
 
     @NotNull
     private GameScheduler getScheduler() {
-        SchedulerModule module = ChallengePlugin.getScheduler();
-        return module.getMainScheduler();
+        SchedulerModule module = ChallengePlugin.getSchedulers();
+        return module.getPrimaryScheduler();
     }
 }

@@ -1,4 +1,4 @@
-package io.github.aparx.challenges.looping.loadable.modules.loop.loops.tnt;
+package io.github.aparx.challenges.looping.loadable.modules.loop.tnt;
 
 import io.github.aparx.challenges.looping.PluginConstants;
 import io.github.aparx.challenges.looping.loadable.modules.BlockModule;

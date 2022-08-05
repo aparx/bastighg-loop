@@ -1,9 +1,15 @@
 package io.github.aparx.challenges.looping;
 
 import com.google.common.base.Preconditions;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import io.github.aparx.challenges.looping.command.CommandHandler;
+import io.github.aparx.challenges.looping.command.commands.CommandPause;
+import io.github.aparx.challenges.looping.command.commands.CommandStart;
+import io.github.aparx.challenges.looping.command.commands.CommandStop;
 import io.github.aparx.challenges.looping.loadable.PluginLoadable;
+import io.github.aparx.challenges.looping.loadable.modules.EntityLoopModule;
 import io.github.aparx.challenges.looping.loadable.modules.SchedulerModule;
-import io.github.aparx.challenges.looping.loadable.variants.MainLoadable;
+import io.github.aparx.challenges.looping.loadable.modules.ImmuneModule;
 import io.github.aparx.challenges.looping.loadable.variants.ModuleManager;
 import io.github.aparx.challenges.looping.logger.DebugLogger;
 import lombok.Getter;
@@ -12,8 +18,9 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import javax.validation.constraints.NotNull;
 
-import static io.github.aparx.challenges.looping.PluginMagics.State.POST_LOAD;
-import static io.github.aparx.challenges.looping.PluginMagics.State.PRE_LOAD;
+import static io.github.aparx.challenges.looping.PluginMagics.GameState.*;
+import static io.github.aparx.challenges.looping.PluginMagics.PluginState.POST_LOAD;
+import static io.github.aparx.challenges.looping.PluginMagics.PluginState.PRE_LOAD;
 
 public final class ChallengePlugin extends JavaPlugin {
 
@@ -26,7 +33,7 @@ public final class ChallengePlugin extends JavaPlugin {
 
     @NotNull
     public static LoadableRegister<PluginLoadable> getLoadables() {
-        return runningInstance.getLoadableRegister();
+        return runningInstance.getMainRegister();
     }
 
     @NotNull
@@ -35,13 +42,17 @@ public final class ChallengePlugin extends JavaPlugin {
     }
 
     @NotNull
-    public static SchedulerModule getScheduler() {
+    public static SchedulerModule getSchedulers() {
         return getModules().getInstance(SchedulerModule.class);
     }
 
     @NotNull
     public static PluginMagics getMagics() {
         return runningInstance.getPluginMagics();
+    }
+
+    public static boolean isPluginState(PluginMagics.PluginState state) {
+        return runningInstance != null && getMagics().isState(state);
     }
 
     @NotNull
@@ -52,7 +63,7 @@ public final class ChallengePlugin extends JavaPlugin {
     /* Plugin implementation */
 
     @NotNull @Getter
-    private final LoadableRegister<PluginLoadable> loadableRegister;
+    private final LoadableRegister<PluginLoadable> mainRegister;
 
     @NotNull @Getter
     private final PluginMagics pluginMagics;
@@ -60,10 +71,13 @@ public final class ChallengePlugin extends JavaPlugin {
     @NotNull @Getter
     private final ModuleManager moduleManager;
 
+    @NotNull @Getter
+    private CommandHandler commandHandler;
+
     public ChallengePlugin() {
         ChallengePlugin.runningInstance = this;
         // Allocate a new register before the events can be called
-        this.loadableRegister = new LoadableRegister<>(this);
+        this.mainRegister = new LoadableRegister<>(this);
         this.moduleManager = new ModuleManager(this);
         this.pluginMagics = new PluginMagics();
     }
@@ -78,9 +92,15 @@ public final class ChallengePlugin extends JavaPlugin {
             pluginMagics.setDebugMode(PluginConstants.DEBUG_MODE);
             pluginMagics.setDebugLogger(logger);
             logger.info(() -> "Starting plugin in debug mode");
+            // Registers default loadables and modules
             moduleManager.registerDefaults(this);
-            loadableRegister.register(moduleManager);
-            loadableRegister.register(new MainLoadable());
+            mainRegister.register(moduleManager);
+            mainRegister.register(new ImmuneModule());
+            // Registers all default commands
+            commandHandler = new CommandHandler(this);
+            commandHandler.add(new CommandPause(this));
+            commandHandler.add(new CommandStart(this));
+            commandHandler.add(new CommandStop(this));
         } catch (Throwable t) {
             t.printStackTrace();
             Bukkit.getPluginManager().disablePlugin(this);
@@ -93,7 +113,50 @@ public final class ChallengePlugin extends JavaPlugin {
     @Override
     public void onDisable() {
         if (!pluginMagics.isState(POST_LOAD)) return;
-        loadableRegister.unregisterAll();
+        mainRegister.unregisterAll();
     }
+
+    /**
+     * Updates the challenge to given state and notifies underlying
+     * loadables about the change.
+     *
+     * @param state the new state of the challenge
+     * @return true if the state was changed
+     */
+    @CanIgnoreReturnValue
+    public boolean updateChallenge(PluginMagics.GameState state) {
+        Preconditions.checkNotNull(state);
+        PluginMagics pluginMagics = getPluginMagics();
+        PluginMagics.GameState current = pluginMagics.getGameState();
+        pluginMagics.setGameState(state);
+        if (current == state) return false;
+        if (current == PAUSED) {
+            mainRegister.setPaused(false);
+            if (state == STARTED)
+                return true;
+        }
+        switch (state) {
+            /* Signals every loadable to pause */
+            case PAUSED -> mainRegister.setPaused(true);
+            /* Signals every loadable to stop */
+            case STOPPED -> {
+                mainRegister.unload(this);
+                explicitStop();
+            }
+            /* Signals every loadable to start */
+            case STARTED -> mainRegister.load(this);
+            default -> {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private void explicitStop() {
+        ModuleManager modules = getModules();
+        EntityLoopModule instance = modules.getInstance(EntityLoopModule.class);
+        instance.killAll();
+    }
+
 
 }

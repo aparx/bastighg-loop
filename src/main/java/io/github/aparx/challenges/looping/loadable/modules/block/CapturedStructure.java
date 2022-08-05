@@ -13,6 +13,7 @@ import javax.annotation.Nullable;
 import javax.annotation.concurrent.NotThreadSafe;
 import javax.validation.constraints.NotNull;
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -121,20 +122,20 @@ public final class CapturedStructure {
     }
 
     public void placeCapture(
-            @Nullable Consumer<Location> action) {
+            @Nullable BiConsumer<CapturedBlockData, Boolean> action) {
         placeCapture(true, action);
     }
 
     public void placeCapture(
             boolean playEffect,
-            @Nullable Consumer<Location> action) {
+            @Nullable BiConsumer<CapturedBlockData, Boolean> action) {
         placeCapture(0, 0, 0, playEffect, action);
     }
 
     public void placeCapture(
             int offsetX, int offsetY, int offsetZ,
             boolean playEffect,
-            @Nullable Consumer<Location> action) {
+            @Nullable BiConsumer<CapturedBlockData, Boolean> action) {
         for (CapturedBlockData data : blockData) {
             if (data == null) continue;
             Location location = data.getLocation();
@@ -146,15 +147,15 @@ public final class CapturedStructure {
             if (world == null) continue;
             // We skip if the current data is already our desired data
             BlockData current = world.getBlockData(posX, posY, posZ);
-            if (newData.equals(current)) continue;
+            boolean willUpdateBlocks = !newData.equals(current);
+            if (action != null) action.accept(data, willUpdateBlocks);
+            if (!willUpdateBlocks) return;
             // We update the block data at given position to the capture
             world.setBlockData(posX, posY, posZ, newData);
             if (playEffect && effectPlayer != null) {
                 // Now we play the visual effect as it is wanted behaviour
                 effectPlayer.playParticles(world, posX, posY, posZ);
             }
-            if (action != null)
-                action.accept(location);
         }
         blockData.clear();
     }

@@ -4,3 +4,13 @@ main: io.github.aparx.challenges.looping.ChallengePlugin
 api-version: 1.19
 authors: [ bonedfps ]
 description: \"Alles-Looped\"-Challenge für Basti
+commands:
+  start:
+    description: "Startet die Challenge"
+    permission: "challenge.start"
+  stop:
+    description: "Beendet die Challenge"
+    permission: "challenge.stop"
+  pause:
+    description: "Pausiert die Challenge"
+    permission: "challenge.pause"

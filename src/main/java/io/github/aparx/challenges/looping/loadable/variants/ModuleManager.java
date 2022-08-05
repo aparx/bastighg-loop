@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import io.github.aparx.challenges.looping.ChallengePlugin;
 import io.github.aparx.challenges.looping.LoadableRegister;
 import io.github.aparx.challenges.looping.PluginMagics;
+import io.github.aparx.challenges.looping.functional.IStatePauseable;
 import io.github.aparx.challenges.looping.loadable.ChallengeModule;
 import io.github.aparx.challenges.looping.loadable.PluginLoadable;
 import io.github.aparx.challenges.looping.loadable.modules.BlockModule;
@@ -14,43 +15,17 @@ import org.bukkit.plugin.Plugin;
 
 import javax.validation.constraints.NotNull;
 
-import static io.github.aparx.challenges.looping.PluginMagics.State.PRE_LOAD;
+import static io.github.aparx.challenges.looping.PluginMagics.PluginState.PRE_LOAD;
 
 /**
  * @author aparx (Vinzent Zeband)
  * @version 07:32 CET, 01.08.2022
  * @since 1.0
  */
-public class ModuleManager
-        extends LoadableRegister<ChallengeModule>
-        implements PluginLoadable {
+public class ModuleManager extends LoadableRegister<ChallengeModule> {
 
     public ModuleManager(Plugin manager) {
         super(manager);
-    }
-
-    @Override
-    public synchronized void load(Plugin plugin) throws Throwable {
-        Preconditions.checkNotNull(plugin);
-        forEach((aClass, challengeModule) -> {
-            // Omits the `load` notify to all modules
-            handleLoadAction(() -> challengeModule.load(plugin));
-        });
-    }
-
-    @Override
-    public synchronized void unload(Plugin plugin) throws Throwable {
-        Preconditions.checkNotNull(plugin);
-        forEach((aClass, challengeModule) -> {
-            // Omits the `unload` notify to all modules
-            handleLoadAction(() -> challengeModule.unload(plugin));
-        });
-    }
-
-    public synchronized void notifyPause(boolean paused) {
-        forEach((aClass, challengeModule) -> {
-           challengeModule.setPaused(paused);
-        });
     }
 
     public synchronized void registerDefaults(@NotNull Plugin plugin) {
@@ -58,6 +33,7 @@ public class ModuleManager
         final PluginMagics magics = ChallengePlugin.getMagics();
         Preconditions.checkArgument(magics.isState(PRE_LOAD));
         register(new SchedulerModule());
+        getInstance(SchedulerModule.class).registerDefaults(plugin);
         register(new BlockModule());
         register(new EntityLoopModule(plugin));
         register(new EntityDamageModule());

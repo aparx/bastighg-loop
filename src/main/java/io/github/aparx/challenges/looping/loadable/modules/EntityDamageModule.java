@@ -3,6 +3,7 @@ package io.github.aparx.challenges.looping.loadable.modules;
 import io.github.aparx.challenges.looping.ChallengePlugin;
 import io.github.aparx.challenges.looping.loadable.ChallengeModule;
 import io.github.aparx.challenges.looping.scheduler.AbstractTask;
+import io.github.aparx.challenges.looping.scheduler.DelegatedTask;
 import io.github.aparx.challenges.looping.scheduler.GameScheduler;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -10,14 +11,11 @@ import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
-import org.bukkit.entity.SpawnCategory;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
-import org.bukkit.plugin.Plugin;
 
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -59,9 +57,9 @@ public final class EntityDamageModule
             if (lastDamage.getCause() != ENTITY_EXPLOSION) return;
         }
         final Location location = entity.getLocation().clone();
-        SchedulerModule module = ChallengePlugin.getScheduler();
-        GameScheduler scheduler = module.getMainScheduler();
-        scheduler.attach(AbstractTask.instantOfChallenge(task -> {
+        SchedulerModule module = ChallengePlugin.getSchedulers();
+        GameScheduler scheduler = module.getPrimaryScheduler();
+        scheduler.attach(AbstractTask.instantOfChallenge(DelegatedTask.ofStop(task -> {
             final World world = location.getWorld();
             if (world == null) return;
             Entity spawn = world.spawn(location, type, e -> {
@@ -71,7 +69,7 @@ public final class EntityDamageModule
             final double maxHeight = spawn.getHeight() / 2;
             world.spawnParticle(Particle.CLOUD, location, 4, 0, maxHeight, 0, 0.03, null, false);
             world.spawnParticle(Particle.FLAME, location, 4, 0, maxHeight, 0, 0.02, null, false);
-        }));
+        })));
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
@@ -84,11 +82,11 @@ public final class EntityDamageModule
             final var debugger = ChallengePlugin.getDebugLogger();
             Entity damager = event.getDamager();
             if (!(damager instanceof Player)) return;
-            SchedulerModule module = ChallengePlugin.getScheduler();
-            GameScheduler scheduler = module.getMainScheduler();
+            SchedulerModule module = ChallengePlugin.getSchedulers();
+            GameScheduler scheduler = module.getPrimaryScheduler();
             // This way of doing it may not be working after stopping the
             // challenge (is this not the goal?)
-            scheduler.attach(AbstractTask.instantOfChallenge(task -> {
+            scheduler.attach(AbstractTask.instantOfChallenge(DelegatedTask.ofStop(task -> {
                 if (event.isCancelled() || !entity.isValid()) {
                     task.stop();
                     return;
@@ -103,7 +101,7 @@ public final class EntityDamageModule
                     return;
                 }
                 damagee.damage(event.getDamage(), damager);
-            }));
+            })));
         }
     }
 }

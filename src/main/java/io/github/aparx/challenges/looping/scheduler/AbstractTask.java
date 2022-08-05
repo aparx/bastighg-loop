@@ -106,18 +106,16 @@ public abstract class AbstractTask extends StatePauseable {
     @CanIgnoreReturnValue
     public synchronized final boolean stop() {
         if (!isStarted()) return false;
-        isStarted = false;
         onStop();
+        isStarted = false;
         setTicksAlive(0);
+        setCallAmount(0);   // TODO
         return !isStarted();
     }
 
     public synchronized final void updateTask() {
-        if (!isStarted() || isPaused()) return;
-        if (!hasCallsLeft()) {
-            stop();
-            return;
-        }
+        if (!isStarted() || isActuallyPaused()) return;
+        if (!hasCallsLeft()) { stop(); return; }
         if (!duration.isMatchingCycle(++ticksAlive)) return;
         // We use methods to give the possibility of overriding the
         // behaviour. Scheduled for change, due to pass by value cost. TODO
@@ -134,5 +132,9 @@ public abstract class AbstractTask extends StatePauseable {
         return duration.getCallLimit() > getCallAmount();
     }
 
+    protected boolean isActuallyPaused() {
+        // Overridable in order to disable the pause feature
+        return isPaused();
+    }
 
 }

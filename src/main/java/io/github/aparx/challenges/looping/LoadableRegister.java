@@ -2,6 +2,9 @@ package io.github.aparx.challenges.looping;
 
 import com.google.common.base.Preconditions;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import io.github.aparx.challenges.looping.functional.IStatePauseable;
+import io.github.aparx.challenges.looping.functional.StatePauseable;
+import io.github.aparx.challenges.looping.functional.ThrowableConsumer;
 import io.github.aparx.challenges.looping.functional.ThrowableRunnable;
 import io.github.aparx.challenges.looping.loadable.PluginLoadable;
 import lombok.Getter;
@@ -13,13 +16,16 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 /**
  * @author aparx (Vinzent Zeband)
  * @version 06:00 CET, 01.08.2022
  * @since 1.0
  */
-public class LoadableRegister<T extends PluginLoadable> {
+public class LoadableRegister<T extends PluginLoadable>
+        extends StatePauseable
+        implements PluginLoadable {
 
     @NotNull @Getter
     private final Plugin manager;
@@ -59,7 +65,6 @@ public class LoadableRegister<T extends PluginLoadable> {
             predecessor = unregister(decl);
         }
         table.put(decl, loadable);
-        handleLoadAction(() -> loadable.load(getManager()));
         return predecessor;
     }
 
@@ -71,6 +76,7 @@ public class LoadableRegister<T extends PluginLoadable> {
         Preconditions.checkNotNull(type);
         if (!hasInstance(type)) return null;
         T target = table.remove(type);
+        // Unload the target if already loaded
         handleLoadAction(() -> target.unload(getManager()));
         return target;
     }
@@ -89,6 +95,45 @@ public class LoadableRegister<T extends PluginLoadable> {
     @NotNull
     public final Map<Class<? extends T>, T> getTable() {
         return table;
+    }
+
+    /* Event implementations */
+
+    @Override
+    public synchronized void load(
+            final @NotNull Plugin plugin) {
+        Preconditions.checkNotNull(plugin);
+        forEach((aClass, loadableModule) -> {
+            // Omits the `load` notify to all modules
+            handleLoadAction(() -> loadableModule.load(plugin));
+        });
+    }
+
+    @Override
+    public synchronized void unload(
+            final @NotNull Plugin plugin) {
+        Preconditions.checkNotNull(plugin);
+        forEach((aClass, loadableModule) -> {
+            // Omits the `unload` notify to all modules
+            handleLoadAction(() -> loadableModule.unload(plugin));
+        });
+    }
+
+    @Override
+    protected void onPause() {
+        notifyPauseUpdate(true);
+    }
+
+    @Override
+    protected void onResume() {
+        notifyPauseUpdate(false);
+    }
+
+    private synchronized void notifyPauseUpdate(boolean paused) {
+        forEach((aClass, loadableModule) -> {
+            if (!(loadableModule instanceof IStatePauseable)) return;
+            ((IStatePauseable) loadableModule).setPaused(paused);
+        });
     }
 
     public static void handleLoadAction(@NotNull ThrowableRunnable action) {
