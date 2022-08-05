@@ -5,10 +5,8 @@ import io.github.aparx.challenges.looping.loadable.modules.block.CapturedStructu
 import io.github.aparx.challenges.looping.loadable.modules.loop.LoopModuleExtension;
 import io.github.aparx.challenges.looping.loadable.modules.loop.MetadataWrapper;
 import lombok.Getter;
-import org.bukkit.entity.ArmorStand;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.Player;
-import org.bukkit.entity.Projectile;
+import org.bukkit.Material;
+import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -19,6 +17,9 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.projectiles.ProjectileSource;
 
 import javax.validation.constraints.NotNull;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author aparx (Vinzent Zeband)
@@ -30,6 +31,9 @@ public class LoopProjectileModule
         implements Listener {
 
     public static final String META_KEY = "projectile_module";
+
+    public static final Set<EntityType> PROJECTILE_BLACKLIST =
+            Set.of(EntityType.SPLASH_POTION, EntityType.FIREWORK);
 
     @NotNull @Getter
     private final Plugin plugin;
@@ -79,7 +83,7 @@ public class LoopProjectileModule
         if (shouldIgnoreShooter(shooter)) return;
         LoopProjectileEntity linked = getLinkedEntityFrom(proj);
         if (linked != null) return;
-        // TODO change rotation
+        if (PROJECTILE_BLACKLIST.contains(proj.getType())) return;
         linked = spawnAndRegister(getPlugin(), event.getLocation());
         linked.setProjectile(proj);
         linked.setInitialVelocity(proj.getVelocity());
