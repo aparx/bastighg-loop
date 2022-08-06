@@ -202,7 +202,6 @@ public final class CapturedStructure {
                 effectPlayer.playParticles(world, posX, posY, posZ);
             }
         }
-        blockData.clear();
     }
 
     /* non-mutating operations */

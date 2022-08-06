@@ -50,7 +50,7 @@ public abstract class LoopEntity extends AbstractTask {
             final long certaintyUpdateSpeed) {
         // The smaller `certaintyUpdateSpeed` the higher the overall
         // performance of the entity
-        super(RelativeDuration.ofSurvivor(certaintyUpdateSpeed));
+        super(RelativeDuration.ofSurvivor(1, certaintyUpdateSpeed));
         this.entityReference = new WeakReference<>(Preconditions.checkNotNull(entity));
         this.entityId = entity.getEntityId();
         this.entityUUID = entity.getUniqueId();

@@ -62,9 +62,8 @@ public final class EntityDamageModule
         scheduler.attach(AbstractTask.instantOfChallenge(DelegatedTask.ofStop(task -> {
             final World world = location.getWorld();
             if (world == null) return;
-            Entity spawn = world.spawn(location, type, e -> {
-                // TODO actually clone entity's NBT
-            });
+            // TODO actually clone entity's NBT
+            Entity spawn = world.spawn(location, type);
             // TODO move to an EffectPlayer instance
             final double maxHeight = spawn.getHeight() / 2;
             world.spawnParticle(Particle.CLOUD, location, 4, 0, maxHeight, 0, 0.03, null, false);

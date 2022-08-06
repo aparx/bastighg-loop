@@ -58,7 +58,7 @@ public final class BlockStructures {
         if (material == null || material.isAir()) return false;
         if (!material.isSolid() && material.isBlock()) return true;
         // ...
-        return false;
+        return SPECIAL_LINKS.containsKey(material);
     }
 
     private static boolean isBlocksAttachableTo(Block block) {

@@ -5,22 +5,18 @@ import io.github.aparx.challenges.looping.loadable.modules.block.CapturedStructu
 import io.github.aparx.challenges.looping.loadable.modules.loop.LoopModuleExtension;
 import io.github.aparx.challenges.looping.loadable.modules.loop.MetadataWrapper;
 import lombok.Getter;
-import org.bukkit.Material;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.entity.EntityExplodeEvent;
-import org.bukkit.event.entity.ProjectileHitEvent;
-import org.bukkit.event.entity.ProjectileLaunchEvent;
+import org.bukkit.event.entity.*;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.projectiles.ProjectileSource;
+import org.bukkit.util.Vector;
 
 import javax.validation.constraints.NotNull;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author aparx (Vinzent Zeband)
@@ -87,11 +83,23 @@ public class LoopProjectileModule
         if (PROJECTILE_BLACKLIST.contains(proj.getType())) return;
         linked = spawnAndRegister(getPlugin(), event.getLocation());
         linked.setProjectile(proj);
-        linked.setInitialVelocity(proj.getVelocity());
+        final Vector velocity = proj.getVelocity();
+        linked.setInitialVelocity(velocity);
+        if (LoopProjectileEntity.isZeroVector(velocity)) {
+            // Since some entities have a noticeable delay between
+            // launching a projectile and actually giving velocity, the
+            // late velocity setting is required
+            final LoopProjectileEntity fLinked = linked;
+            Bukkit.getScheduler().runTaskLater(getPlugin(), () -> {
+                if (!proj.isValid()) return;
+                fLinked.setInitialVelocity(proj.getVelocity());
+            }, 2);
+        }
     }
 
     private boolean shouldIgnoreShooter(ProjectileSource shooter) {
-        return shooter instanceof Player && !PluginConstants.DEBUG_MODE;
+        // TODO blacklist certain shooters?
+        return false;
     }
 
 }

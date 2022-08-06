@@ -159,6 +159,9 @@ public abstract class LoopModuleExtension<T extends LoopEntity>
             e.setSmall(true);
             e.setCollidable(false);
             e.setCustomNameVisible(false);
+            e.setSilent(true);
+            e.setCollidable(true);
+            e.setMarker(true);
             e.setMetadata(getMetadataKey(), new FixedMetadataValue(plugin, true));
         });
     }

@@ -40,20 +40,6 @@ public final class ChallengeScheduler extends GameScheduler {
     }
 
     @Override
-    protected void onScheduleStart() {
-        if (!PluginConstants.DEBUG_MODE) return;
-        RelativeDuration duration = RelativeDuration.ofSurvivor(20 * 5);
-        attach(AbstractTask.delegate(duration, DelegatedTask.ofUpdate(task -> {
-            EntityLoopModule instance = ChallengePlugin.getModules().getInstance(EntityLoopModule.class);
-            DebugLogger debugLogger = ChallengePlugin.getDebugLogger();
-            debugLogger.info("[Loop-Entity-Report]");
-            instance.getLoops().forEach((c, m) -> {
-                debugLogger.info("[%s] REPORTS [%d]", c.getSimpleName(), m.getEntities().size());
-            });
-        })));
-    }
-
-    @Override
     protected void onScheduleStop() {
         ticksNonPaused = 0;
     }

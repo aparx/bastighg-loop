@@ -39,7 +39,7 @@ public class CommandInfo extends ChallengeExecutable {
         SchedulerModule schedulers = ChallengePlugin.getSchedulers();
         ChallengeScheduler primaryScheduler = schedulers.getPrimaryScheduler();
         int childAmount = primaryScheduler.childAmount();
-        sender.sendMessage(NORMAL_PREFIX + " §r§m-------§b§l Info§r §m-------");
+        sender.sendMessage(NORMAL_PREFIX + " §r§m----------§b§l Info§r §m----------");
         sender.sendMessage(NORMAL_PREFIX + " §rChallenge Status: §b§l" + magics.getGameState());
         sender.sendMessage(NORMAL_PREFIX + " §rTotal Attachments: "
                 + getColorForCount(childAmount) + ChatColor.BOLD + childAmount);
@@ -51,14 +51,15 @@ public class CommandInfo extends ChallengeExecutable {
                     + " §7§l>§r " + c.getSimpleName()
                     + ": " + color + ChatColor.BOLD + count);
         });
+        sender.sendMessage(NORMAL_PREFIX + " §r§m-------------------------");
         return false;
     }
 
     private ChatColor getColorForCount(int count) {
-        return count >= 500 ? ChatColor.DARK_RED
-                : (count >= 300 ? ChatColor.RED
-                : (count >= 200 ? ChatColor.GOLD
-                : (count >= 100 ? ChatColor.YELLOW
+        return count >= 3500 ? ChatColor.DARK_RED
+                : (count >= 3000 ? ChatColor.RED
+                : (count >= 2000 ? ChatColor.GOLD
+                : (count >= 1000 ? ChatColor.YELLOW
                 : (count == 0 ? ChatColor.GRAY
                 : ChatColor.AQUA))));
     }

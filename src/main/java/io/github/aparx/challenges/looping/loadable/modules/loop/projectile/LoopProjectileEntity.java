@@ -1,5 +1,6 @@
 package io.github.aparx.challenges.looping.loadable.modules.loop.projectile;
 
+import com.google.common.collect.EnumMultiset;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import io.github.aparx.challenges.looping.ChallengePlugin;
 import io.github.aparx.challenges.looping.PluginConstants;
@@ -7,10 +8,12 @@ import io.github.aparx.challenges.looping.loadable.modules.block.CapturedStructu
 import io.github.aparx.challenges.looping.loadable.modules.loop.LoopEntity;
 import io.github.aparx.challenges.looping.loadable.modules.loop.LoopModuleExtension;
 import io.github.aparx.challenges.looping.loadable.modules.loop.MetadataWrapper;
+import io.github.aparx.challenges.looping.scheduler.RelativeDuration;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.*;
+import org.bukkit.projectiles.ProjectileSource;
 import org.bukkit.util.Consumer;
 import org.bukkit.util.Vector;
 
@@ -26,6 +29,11 @@ import java.util.UUID;
  * @since 1.0
  */
 public class LoopProjectileEntity extends LoopEntity {
+
+    public static boolean isZeroVector(Vector v) {
+        if (v == null) return true;
+        return v.getX() == 0 && v.getY() == 0 && v.getZ() == 0;
+    }
 
     public static boolean isValidVector(Vector v) {
         if (v == null) return false;
@@ -58,7 +66,7 @@ public class LoopProjectileEntity extends LoopEntity {
     public LoopProjectileEntity(
             final @NotNull ArmorStand entity,
             final @NotNull LoopModuleExtension<?> module) {
-        super(entity, module, module.allocateMetadata(entity), 5);
+        super(entity, module, module.allocateMetadata(entity), 1);
     }
 
     @CanIgnoreReturnValue
@@ -80,17 +88,31 @@ public class LoopProjectileEntity extends LoopEntity {
             final @NotNull Location location,
             @Nullable Vector vector,
             Consumer<Projectile> action) {
-        return spawnProjectile(location, e -> {
-            Vector v = ensureNonnullVector(vector);
-            // Tries to correct `v` if it is invalid
-            if (!isValidVector(v)) {
-                v = getInitialVelocity();
-                if (!isValidVector(v))
-                    v = new Vector();
-            }
+        Projectile projectile = getProjectile();
+        // Alter the current source if possible, and then apply
+        final ProjectileSource latestSource = projectile == null
+                ? null : projectile.getShooter();
+        // Tries to correct `vector` if it is invalid
+        vector = ensureNonnullVector(vector);
+        if (!isValidVector(vector)) {
+            vector = getInitialVelocity();
+            if (!isValidVector(vector))
+                vector = new Vector();
+        }
+        final Vector v = vector;
+        if (!spawnProjectile(location, e -> {
             e.setVelocity(v);
+            e.setShooter(latestSource);
+            // Backwards transition animation specific
+            e.setBounce(e.doesBounce() && !backTransition);
+            e.setInvulnerable(backTransition);
             if (action != null) action.accept(e);
-        });
+        })) return false;
+        // Reapplies velocity onto the projectile if possible
+        projectile = getProjectile();
+        if (projectile == null) return false;
+        projectile.setVelocity(v);
+        return true;
     }
 
     @CanIgnoreReturnValue
@@ -178,6 +200,7 @@ public class LoopProjectileEntity extends LoopEntity {
         metadata.set(KEY_PROJECTILE_UUID, projectile.getUniqueId());
         metadata.set(KEY_HAS_GRAVITY, projectile.hasGravity());
         setEntityType(projectile.getType());
+        linkEntityToThis(projectile);
     }
 
     public synchronized void setHitPosition(Vector vector) {
@@ -266,7 +289,28 @@ public class LoopProjectileEntity extends LoopEntity {
     @Override
     protected void onUpdate() {
         if (!backTransition || isInvalid()) {
-            super.onUpdate();
+            super.onUpdate();   // update first before doing the removal
+            // TODO: projectile removal after it passes the hit-position
+            // The current code is commented out, since it is working,
+            // but not flawlessly due to the updating timer and speed of
+            // velocity, not able to fully detect the distance. In case it
+            // is required at one time, this code can simply be optimized
+            // to the way it is required.
+            /*if (backTransition || isInvalid() || !isStarted()) return;
+            Projectile projectile = getProjectile();
+            if (projectile == null || !projectile.isValid()) return;
+            Vector hitPos = getHitPosition();
+            if (!isValidVector(hitPos)) return;
+            World world = projectile.getWorld();
+            Location hitLoc = hitPos.toLocation(world);
+            Location thisLoc = getEntity().getLocation();
+            Location thatLoc = projectile.getLocation();
+            if (thatLoc.distance(hitLoc) <= 2) {
+                float yaw = thisLoc.getYaw(), pitch = thisLoc.getPitch();
+                projectile.setVelocity(new Vector());
+                projectile.setGravity(false);
+                projectile.setRotation(yaw, pitch);
+            }*/
             return;
         }
         ArmorStand thisEntity = getEntity();
@@ -280,7 +324,7 @@ public class LoopProjectileEntity extends LoopEntity {
         Location thisLocation = thisEntity.getLocation();
         Location thatLocation = projectile.getLocation();
         double distance = thatLocation.distance(thisLocation);
-        if (distance <= 1) {
+        if (distance <= 1.2) {
             animTime = 0; // forces a loop next iteration
         }
     }
