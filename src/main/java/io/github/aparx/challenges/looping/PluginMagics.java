@@ -20,7 +20,7 @@ public final class PluginMagics {
     @Getter @Setter
     private DebugLogger debugLogger;
 
-    volatile private GameState gameState;
+    volatile private GameState gameState = GameState.STOPPED;
 
     public boolean isState(PluginState test) {
         return getState() == test;

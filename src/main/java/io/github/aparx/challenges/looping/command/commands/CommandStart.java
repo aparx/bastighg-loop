@@ -13,7 +13,7 @@ import org.bukkit.command.CommandSender;
  * @version 18:42 CET, 04.08.2022
  * @since 1.0
  */
-@ChallengeCommand(value = "start")
+@ChallengeCommand(value = "cstart")
 public class CommandStart extends ChallengeExecutable {
 
     public CommandStart(ChallengePlugin plugin) {
@@ -30,7 +30,6 @@ public class CommandStart extends ChallengeExecutable {
             return true;
         }
         instance.updateChallenge(PluginMagics.GameState.STARTED);
-        sender.sendMessage(MessageConstants.CHALLENGE_START_SUCCESS);
         return false;
     }
 

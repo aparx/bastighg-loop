@@ -1,9 +1,12 @@
 package io.github.aparx.challenges.looping.loadable.modules.block;
 
 import com.google.common.base.Preconditions;
+import io.github.aparx.challenges.looping.ChallengePlugin;
+import io.github.aparx.challenges.looping.logger.DebugLogger;
 import io.github.aparx.challenges.looping.utils.EffectPlayer;
 import lombok.Getter;
 import lombok.Setter;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
@@ -82,6 +85,29 @@ public final class CapturedStructure {
         return new CapturedStructure(blockData, effectPlayer);
     }
 
+    @NotNull
+    public static CapturedStructure of(
+            final @NotNull Collection<@NotNull CapturedBlockData> blockData,
+            final @NotNull Set<Location> locationSet,
+            final @Nullable EffectPlayer effectPlayer) {
+        return new CapturedStructure(blockData, locationSet, effectPlayer);
+    }
+
+    @NotNull
+    public static CapturedStructure of(
+            final @NotNull Map<Location, @NotNull CapturedBlockData> blockData) {
+        return new CapturedStructure(blockData, EffectPlayer.BLOCK_CLOUD_PLAYER);
+    }
+
+    @NotNull
+    public static CapturedStructure of(
+            final @NotNull Map<Location, @NotNull CapturedBlockData> blockData,
+            final @Nullable EffectPlayer effectPlayer) {
+        return new CapturedStructure(blockData, effectPlayer);
+    }
+
+
+
     /* BlockResetStruct class implementation */
 
     @NotNull
@@ -94,6 +120,14 @@ public final class CapturedStructure {
     private EffectPlayer effectPlayer;
 
     CapturedStructure(
+            final @NotNull Map<Location, @NotNull CapturedBlockData> blockData,
+            final @Nullable EffectPlayer effectPlayer) {
+        this.blockData = blockData.values();
+        this.locationSet = blockData.keySet();
+        this.effectPlayer = effectPlayer;
+    }
+
+    CapturedStructure(
             final @NotNull Collection<@NotNull CapturedBlockData> blockData,
             final @Nullable EffectPlayer effectPlayer) {
         this.blockData = Preconditions.checkNotNull(blockData);
@@ -103,6 +137,15 @@ public final class CapturedStructure {
             locations.add(data.getLocation());
         }
         this.locationSet = Collections.unmodifiableSet(locations);
+        this.effectPlayer = effectPlayer;
+    }
+
+    CapturedStructure(
+            final @NotNull Collection<@NotNull CapturedBlockData> blockData,
+            final @NotNull Set<@NotNull Location> locations,
+            final @Nullable EffectPlayer effectPlayer) {
+        this.blockData = Preconditions.checkNotNull(blockData);
+        this.locationSet = Preconditions.checkNotNull(locations);
         this.effectPlayer = effectPlayer;
     }
 
@@ -136,6 +179,8 @@ public final class CapturedStructure {
             int offsetX, int offsetY, int offsetZ,
             boolean playEffect,
             @Nullable BiConsumer<CapturedBlockData, Boolean> action) {
+        DebugLogger debugLogger = ChallengePlugin.getDebugLogger();
+        debugLogger.info(() -> "Placing %d captured blocks", blockData.size());
         for (CapturedBlockData data : blockData) {
             if (data == null) continue;
             Location location = data.getLocation();
@@ -149,7 +194,7 @@ public final class CapturedStructure {
             BlockData current = world.getBlockData(posX, posY, posZ);
             boolean willUpdateBlocks = !newData.equals(current);
             if (action != null) action.accept(data, willUpdateBlocks);
-            if (!willUpdateBlocks) return;
+            if (!willUpdateBlocks) continue;
             // We update the block data at given position to the capture
             world.setBlockData(posX, posY, posZ, newData);
             if (playEffect && effectPlayer != null) {
@@ -167,8 +212,11 @@ public final class CapturedStructure {
         if (blockData == null) return this;
         ArrayList<CapturedBlockData> dataCopy
                 = new ArrayList<>(this.blockData);
+        Set<Location> locationCopy
+                = new HashSet<>(this.locationSet);
         dataCopy.add(blockData);
-        return of(dataCopy);
+        locationCopy.add(blockData.getLocation());
+        return of(dataCopy, locationCopy, effectPlayer);
     }
 
     @NotNull
@@ -180,10 +228,10 @@ public final class CapturedStructure {
     @NotNull
     public CapturedStructure add(@Nullable Collection<@NotNull CapturedBlockData> blockData) {
         if (blockData == null || blockData.isEmpty()) return this;
-        CapturedStructure newStruct = new CapturedStructure(
-                new ArrayList<>(this.blockData), effectPlayer);
-        newStruct.blockData.addAll(blockData);
-        return newStruct;
+        ArrayList<@NotNull CapturedBlockData> newData;
+        newData = new ArrayList<>(this.blockData);
+        newData.addAll(blockData);
+        return of(newData, effectPlayer);
     }
 
     @Override

@@ -5,12 +5,15 @@ api-version: 1.19
 authors: [ bonedfps ]
 description: \"Alles-Looped\"-Challenge für Basti
 commands:
-  start:
+  cstart:
     description: "Startet die Challenge"
-    permission: "challenge.start"
-  stop:
+    permission: "challenge.cstart"
+  cstop:
     description: "Beendet die Challenge"
-    permission: "challenge.stop"
-  pause:
+    permission: "challenge.cstop"
+  cpause:
     description: "Pausiert die Challenge"
-    permission: "challenge.pause"
+    permission: "challenge.cpause"
+  cinfo:
+    description: "Debug-Tool um aktuelle Informationen aufzurufen"
+    permission: "challenge.cinfo"

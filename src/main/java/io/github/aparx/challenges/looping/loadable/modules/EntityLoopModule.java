@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiPredicate;
 
 /**
@@ -121,6 +122,12 @@ public final class EntityLoopModule
                 if (action.test(mod, e)) break;
             }
         }
+    }
+
+    public synchronized int getTotalInstances() {
+        AtomicInteger i = new AtomicInteger();
+        getLoops().forEach((a, e) -> i.addAndGet(e.getEntities().size()));
+        return i.get();
     }
 
     /* Chunk Event Handling */

@@ -13,7 +13,7 @@ import org.bukkit.command.CommandSender;
  * @version 18:42 CET, 04.08.2022
  * @since 1.0
  */
-@ChallengeCommand(value = "stop")
+@ChallengeCommand(value = "cstop")
 public class CommandStop extends ChallengeExecutable {
 
     public CommandStop(ChallengePlugin plugin) {
@@ -34,7 +34,6 @@ public class CommandStop extends ChallengeExecutable {
             return true;
         }
         instance.updateChallenge(PluginMagics.GameState.STOPPED);
-        sender.sendMessage(MessageConstants.CHALLENGE_STOP_SUCCESS);
         return false;
     }
 

@@ -87,10 +87,7 @@ public final class EntityDamageModule
             // This way of doing it may not be working after stopping the
             // challenge (is this not the goal?)
             scheduler.attach(AbstractTask.instantOfChallenge(DelegatedTask.ofStop(task -> {
-                if (event.isCancelled() || !entity.isValid()) {
-                    task.stop();
-                    return;
-                }
+                if (event.isCancelled() || !entity.isValid()) return;
                 // In case the entity cannot die for a longer period
                 // of time, we just kill the entity to signal that
                 if (task.getCallAmount() >= MAX_ENTITY_ITERATIONS

@@ -58,7 +58,7 @@ public class LoopProjectileEntity extends LoopEntity {
     public LoopProjectileEntity(
             final @NotNull ArmorStand entity,
             final @NotNull LoopModuleExtension<?> module) {
-        super(entity, module, module.allocateMetadata(entity), 1);
+        super(entity, module, module.allocateMetadata(entity), 5);
     }
 
     @CanIgnoreReturnValue

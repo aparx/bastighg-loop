@@ -28,6 +28,7 @@ import org.bukkit.plugin.Plugin;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 import java.util.*;
+import java.util.function.Predicate;
 
 /**
  * @author aparx (Vinzent Zeband)
@@ -37,13 +38,16 @@ import java.util.*;
 public final class BlockModule extends ChallengeModule implements Listener {
 
     /**
-     * The initial capacity used within Sets registering positions of
+     * The initial capacity used within sets registering positions of
      * block-events to prevent duplicate events to occur.
      */
-    private static final int INITIAL_CAPACITY = 24;
+    public static final int INITIAL_OCCUPANT_CAPACITY = 24;
 
     public static final Set<Location> OCCUPIED_BLOCKS
-            = Collections.synchronizedSet(new HashSet<>(INITIAL_CAPACITY));
+            = Collections.synchronizedSet(new HashSet<>(INITIAL_OCCUPANT_CAPACITY));
+
+    public static final Predicate<Block> EXCLUDE_OCCUPIED_BLOCKS
+            = block -> block != null && !isOccupied(block.getLocation());
 
     /**
      * Places given {@code structure} after the globally specified
@@ -113,7 +117,8 @@ public final class BlockModule extends ChallengeModule implements Listener {
         BlockState blockReplacedState = event.getBlockReplacedState();
         BlockData blockData = blockReplacedState.getBlockData();
         Location location = blockReplacedState.getLocation();
-        var struct = BlockStructures.getAffectedBlocks(event.getBlock(), false);
+        var struct = BlockStructures.getAffectedBlocks(
+                event.getBlock(), false, EXCLUDE_OCCUPIED_BLOCKS);
         struct = struct.add(CapturedBlockData.capture(location, blockData));
         lateStructurePlacement(struct, event, shouldDropBlocks(event.getPlayer()));
     }
@@ -121,9 +126,10 @@ public final class BlockModule extends ChallengeModule implements Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     public void onBlockBreak(BlockBreakEvent event) {
         if (isNonProcessableEventOrMoment(event)) return;
-        Block block = event.getBlock();
         // TODO how do multi-structures behave with this set?
-        lateStructurePlacement(BlockStructures.getAffectedBlocks(block, true), event, false);
+        var struct = BlockStructures.getAffectedBlocks(
+                event.getBlock(), true, EXCLUDE_OCCUPIED_BLOCKS);
+        lateStructurePlacement(struct, event, false);
     }
 
     public boolean shouldDropBlocks(Player player) {

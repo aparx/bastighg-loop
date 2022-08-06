@@ -94,6 +94,10 @@ public class GameScheduler extends AbstractTask {
 
     /* Child-operations */
 
+    public synchronized int childAmount() {
+        return children.size();
+    }
+
     @CanIgnoreReturnValue
     public synchronized boolean detach(
             final @NotNull AbstractTask task) {

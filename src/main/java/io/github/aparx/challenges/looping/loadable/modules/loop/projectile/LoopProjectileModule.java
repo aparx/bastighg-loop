@@ -18,6 +18,7 @@ import org.bukkit.projectiles.ProjectileSource;
 
 import javax.validation.constraints.NotNull;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -32,8 +33,8 @@ public class LoopProjectileModule
 
     public static final String META_KEY = "projectile_module";
 
-    public static final Set<EntityType> PROJECTILE_BLACKLIST =
-            Set.of(EntityType.SPLASH_POTION, EntityType.FIREWORK);
+    public static final EnumSet<EntityType> PROJECTILE_BLACKLIST =
+            EnumSet.of(EntityType.SPLASH_POTION, EntityType.FIREWORK);
 
     @NotNull @Getter
     private final Plugin plugin;

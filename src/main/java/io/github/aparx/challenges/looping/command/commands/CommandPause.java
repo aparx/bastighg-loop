@@ -13,7 +13,7 @@ import org.bukkit.command.CommandSender;
  * @version 18:42 CET, 04.08.2022
  * @since 1.0
  */
-@ChallengeCommand(value = "pause")
+@ChallengeCommand(value = "cpause")
 public class CommandPause extends ChallengeExecutable {
 
     public CommandPause(ChallengePlugin plugin) {
@@ -34,7 +34,6 @@ public class CommandPause extends ChallengeExecutable {
             return true;
         }
         instance.updateChallenge(PluginMagics.GameState.PAUSED);
-        sender.sendMessage(MessageConstants.CHALLENGE_PAUSE_SUCCESS);
         return false;
     }
 
