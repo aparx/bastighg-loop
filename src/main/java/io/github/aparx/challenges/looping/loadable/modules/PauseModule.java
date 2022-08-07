@@ -10,9 +10,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.entity.FoodLevelChangeEvent;
+import org.bukkit.event.entity.*;
 import org.bukkit.event.player.PlayerInteractEvent;
 
 /**
@@ -72,6 +70,19 @@ public final class PauseModule extends ChallengeModule implements Listener {
         if (e.getItem() != null || e.getAction() == Action.LEFT_CLICK_BLOCK) {
             player.sendMessage(MessageConstants.CHALLENGE_ACTION_PAUSE);
         }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onExplode(EntityExplodeEvent e) {
+        if (!isPaused()) return;
+        e.setCancelled(true);
+        e.blockList().clear();
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onTarget(EntityTargetEvent e) {
+        if (!isPaused()) return;
+        e.setCancelled(true);
     }
 
 }

@@ -11,6 +11,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Mob;
 
 /**
  * @author aparx (Vinzent Zeband)
@@ -48,6 +49,9 @@ public class CommandPause extends ChallengeExecutable {
         Bukkit.getOnlinePlayers().forEach(player -> {
             player.sendMessage(MessageConstants.BROADCAST_CHALLENGE_PAUSE);
             player.playSound(player, Sound.BLOCK_STONE_BUTTON_CLICK_ON, 1f, .5f);
+            // Remove all targets from each mob
+            player.getWorld().getEntitiesByClass(Mob.class)
+                    .forEach(mob -> mob.setTarget(null));
         });
         return false;
     }

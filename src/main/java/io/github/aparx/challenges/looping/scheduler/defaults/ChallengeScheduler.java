@@ -95,7 +95,7 @@ public final class ChallengeScheduler extends GameScheduler {
             timeBuilder.append(ChatColor.AQUA);
         }
         timeBuilder.append(ChatColor.BOLD);
-        DisplayUtils.appendTimeToBuilder(timeBuilder, 20 * gameTicks);
+        DisplayUtils.appendTimeToBuilder(timeBuilder, gameTicks);
         var timeText = new TextComponent(timeBuilder.toString());
         Bukkit.getOnlinePlayers().forEach(player -> {
             player.spigot().sendMessage(ChatMessageType.ACTION_BAR, timeText);
