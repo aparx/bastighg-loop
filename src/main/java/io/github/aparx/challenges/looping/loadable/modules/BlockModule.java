@@ -115,7 +115,6 @@ public final class BlockModule extends ChallengeModule implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onBlockPlace(BlockPlaceEvent event) {
-        System.out.println("place " + event.getBlock().getType());
         if (isNonProcessableEventOrMoment(event)) return;
         BlockState blockReplacedState = event.getBlockReplacedState();
         BlockData blockData = blockReplacedState.getBlockData();
@@ -136,7 +135,7 @@ public final class BlockModule extends ChallengeModule implements Listener {
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
-    public void onBlockBreak(BlockSpreadEvent event) {
+    public void onBlockSpread(BlockSpreadEvent event) {
         if (isNonProcessableEventOrMoment(event)) return;
         Block block = event.getBlock();
         Block source = event.getSource();
