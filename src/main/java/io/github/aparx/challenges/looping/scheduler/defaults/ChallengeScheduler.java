@@ -2,7 +2,6 @@ package io.github.aparx.challenges.looping.scheduler.defaults;
 
 import io.github.aparx.challenges.looping.ChallengePlugin;
 import io.github.aparx.challenges.looping.PluginConfig;
-import io.github.aparx.challenges.looping.PluginMagics;
 import io.github.aparx.challenges.looping.scheduler.GameScheduler;
 import io.github.aparx.challenges.looping.utils.TickUnit;
 import lombok.Getter;
@@ -49,22 +48,14 @@ public final class ChallengeScheduler extends GameScheduler {
         super(plugin);
     }
 
-    @Override
-    protected boolean isActuallyPaused() {
-        // This scheduler is never paused updating
-        return false;
-    }
-
-    @Override
-    protected void onScheduleStart() {
-        if (ChallengePlugin.isLoadState(POST_LOAD)) {
-            ChallengePlugin plugin = ChallengePlugin.getInstance();
-            PluginConfig config = plugin.getPluginConfig();
-            setGameTicks(config.gameTicks.getAsLong(gameTicks));
-        }
-    }
-
-    public void setGameTicks(long newTicks) {
+    /**
+     * Updates the internal {@code gameTicks} counter to the specified
+     * long-value and saves the new value into the main configuration.
+     *
+     * @param newTicks the new tick amount
+     * @see ChallengePlugin#getPluginConfig()
+     */
+    public void saveGameTicks(long newTicks) {
         this.gameTicks = newTicks;
         if (ChallengePlugin.isLoadState(POST_LOAD)) {
             ChallengePlugin plugin = ChallengePlugin.getInstance();
@@ -74,12 +65,26 @@ public final class ChallengeScheduler extends GameScheduler {
     }
 
     @Override
+    protected boolean isActuallyPaused() {
+        // This scheduler is never paused updating
+        return false;
+    }
+
+    @Override
+    protected void onScheduleStart() {
+        if (!ChallengePlugin.isLoadState(POST_LOAD)) return;
+        ChallengePlugin plugin = ChallengePlugin.getInstance();
+        PluginConfig config = plugin.getPluginConfig();
+        saveGameTicks(config.gameTicks.getAsLong(gameTicks));
+    }
+
+    @Override
     protected void onScheduleStop() {
         if (!ChallengePlugin.isGameStarted()) {
             // We only reset the game ticks if the plugin was not just
             // reloaded, but someone intentionally and explicitly stopped
             // the challenge
-            setGameTicks(0);
+            saveGameTicks(0);
         }
     }
 
@@ -90,7 +95,7 @@ public final class ChallengeScheduler extends GameScheduler {
             ++gameTicks;
         }
         // Saves the current tick amount twice every second
-        if (gameTicks % 10 == 0) saveTicks();
+        if (gameTicks % 10 == 0) saveGameTicks(gameTicks);
         // We use an additional tick measurement, due to the nature
         // of pause-ability and #getTicksAlive()
         long sec = TickUnit.TICK.convert(gameTicks, TickUnit.SECOND, true);
@@ -113,9 +118,6 @@ public final class ChallengeScheduler extends GameScheduler {
         });
     }
 
-    private void saveTicks() {
-        setGameTicks(gameTicks);
-    }
 
 }
 
