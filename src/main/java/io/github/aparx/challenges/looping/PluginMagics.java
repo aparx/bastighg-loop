@@ -34,29 +34,33 @@ public final class PluginMagics {
         return gameState;
     }
 
-    public boolean isGameStarted() {
+    public synchronized boolean isGameImplyingStart() {
         GameState state = getGameState();
-        if (state == null) return false;
-        return state == GameState.STARTED || state.isRequiringGameStarted();
-    }
-
-    public boolean isGameState(GameState state) {
-        return getGameState() == state;
+        return state != null && state.isImplyingStart();
     }
 
     public enum GameState {
-        STARTED(false),
-        STOPPED(false),
-        PAUSED(true);
+        STARTED,
+        STOPPED,
+        PAUSED;
 
-        private boolean requiringGameStarted;
-
-        GameState(boolean requiringGameStarted) {
-            this.requiringGameStarted = requiringGameStarted;
+        public boolean isImplyingStart() {
+            return switch (this) {
+                case STARTED, PAUSED -> true;
+                default -> false;
+            };
         }
 
-        public boolean isRequiringGameStarted() {
-            return requiringGameStarted;
+        public boolean isStopped() {
+            return this == STOPPED;
+        }
+
+        public boolean isStarted() {
+            return this == STARTED;
+        }
+
+        public boolean isPaused() {
+            return this == PAUSED;
         }
     }
 

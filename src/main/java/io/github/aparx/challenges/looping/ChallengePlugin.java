@@ -10,7 +10,7 @@ import io.github.aparx.challenges.looping.command.commands.CommandStop;
 import io.github.aparx.challenges.looping.loadable.PluginLoadable;
 import io.github.aparx.challenges.looping.loadable.modules.EntityLoopModule;
 import io.github.aparx.challenges.looping.loadable.modules.SchedulerModule;
-import io.github.aparx.challenges.looping.loadable.modules.ImmuneModule;
+import io.github.aparx.challenges.looping.loadable.modules.PauseModule;
 import io.github.aparx.challenges.looping.loadable.variants.ModuleManager;
 import io.github.aparx.challenges.looping.logger.DebugLogger;
 import lombok.Getter;
@@ -56,11 +56,11 @@ public final class ChallengePlugin extends JavaPlugin {
     }
 
     public static boolean isGameState(PluginMagics.GameState state) {
-        return runningInstance != null && getMagics().isGameState(state);
+        return runningInstance != null && getMagics().getGameState() == state;
     }
 
-    public static boolean isGameStarted() {
-        return runningInstance != null && getMagics().isGameStarted();
+    public static boolean isGameImplyingStart() {
+        return runningInstance != null && getMagics().isGameImplyingStart();
     }
 
 
@@ -108,7 +108,7 @@ public final class ChallengePlugin extends JavaPlugin {
             // Registers default loadables and modules
             moduleManager.registerDefaults(this);
             mainRegister.register(moduleManager);
-            mainRegister.register(new ImmuneModule());
+            mainRegister.register(new PauseModule());
             // Registers all default commands
             commandHandler = new CommandHandler(this);
             commandHandler.add(new CommandPause(this));
@@ -121,7 +121,7 @@ public final class ChallengePlugin extends JavaPlugin {
         } finally {
             logger.info(() -> "Pre-loading completed");
             pluginMagics.setState(POST_LOAD);
-            updateChallenge(pluginConfig.lastState.get());
+            updateGameState(pluginConfig.lastState.get());
         }
     }
 
@@ -142,7 +142,7 @@ public final class ChallengePlugin extends JavaPlugin {
      * @return true if the state was changed
      */
     @CanIgnoreReturnValue
-    public boolean updateChallenge(PluginMagics.GameState newState) {
+    public boolean updateGameState(PluginMagics.GameState newState) {
         Preconditions.checkArgument(isLoadState(POST_LOAD));
         final DebugLogger log = getDebugLogger();
         final PluginMagics pluginMagics = getPluginMagics();
@@ -152,13 +152,11 @@ public final class ChallengePlugin extends JavaPlugin {
         getPluginConfig().lastState.set(newState);
         pluginMagics.setGameState(newState);
         // Now it is actually determined what consequences the change has
-        if (nowState == PAUSED) {
-            mainRegister.setPaused(false);
-            if (newState == STARTED) return true;
-        } else if (nowState == STOPPED && newState.isRequiringGameStarted()) {
+        if (!newState.isPaused()) mainRegister.setPaused(false);
+        if (nowState.isStopped() && newState.isPaused()) {
             // Since the new state is reliant on a start, but we have not
             // even instantiated or even loaded, we first need to boot
-            return updateChallenge(STARTED) && updateChallenge(newState);
+            return updateGameState(STARTED) && updateGameState(newState);
         }
         log.info(() -> "Status changed from %s to %s", nowState, newState);
         switch (newState) {

@@ -20,6 +20,9 @@ public final class BlockStructures {
 
     private static final Map<Material, BlockFace[]> SPECIAL_LINKS = new HashMap<>();
 
+    private static final BlockFace[] UP_FACE = new BlockFace[]{BlockFace.UP};
+    private static final BlockFace[] DOWN_FACE = new BlockFace[]{BlockFace.DOWN};
+
     private static final BlockFace[] VERTICAL_DIRECTIONS
             = {BlockFace.UP, BlockFace.DOWN};
 
@@ -39,15 +42,18 @@ public final class BlockStructures {
     private static final int MAXIMUM_MULTIDIR_SIZE = 15;
 
     static {
-        SPECIAL_LINKS.put(Material.TALL_GRASS, new BlockFace[]{BlockFace.UP});
-        SPECIAL_LINKS.put(Material.SUGAR_CANE, new BlockFace[]{BlockFace.UP});
-        SPECIAL_LINKS.put(Material.TWISTING_VINES, new BlockFace[]{BlockFace.UP});
-        SPECIAL_LINKS.put(Material.CACTUS, new BlockFace[]{BlockFace.UP});
-        SPECIAL_LINKS.put(Material.BIG_DRIPLEAF, new BlockFace[]{BlockFace.UP});
-        SPECIAL_LINKS.put(Material.SMALL_DRIPLEAF, new BlockFace[]{BlockFace.UP});
-        SPECIAL_LINKS.put(Material.BAMBOO, new BlockFace[]{BlockFace.UP});
-        SPECIAL_LINKS.put(Material.KELP, new BlockFace[]{BlockFace.UP});
-        SPECIAL_LINKS.put(Material.VINE, new BlockFace[]{BlockFace.DOWN});
+        SPECIAL_LINKS.put(Material.SAND, UP_FACE);
+        SPECIAL_LINKS.put(Material.RED_SAND, UP_FACE);
+        SPECIAL_LINKS.put(Material.GRAVEL, UP_FACE);
+        SPECIAL_LINKS.put(Material.TALL_GRASS, UP_FACE);
+        SPECIAL_LINKS.put(Material.SUGAR_CANE, UP_FACE);
+        SPECIAL_LINKS.put(Material.TWISTING_VINES, UP_FACE);
+        SPECIAL_LINKS.put(Material.CACTUS, UP_FACE);
+        SPECIAL_LINKS.put(Material.BIG_DRIPLEAF, UP_FACE);
+        SPECIAL_LINKS.put(Material.SMALL_DRIPLEAF, UP_FACE);
+        SPECIAL_LINKS.put(Material.BAMBOO, UP_FACE);
+        SPECIAL_LINKS.put(Material.KELP, UP_FACE);
+        SPECIAL_LINKS.put(Material.VINE, DOWN_FACE);
     }
 
     public BlockStructures() {

@@ -13,9 +13,9 @@ public final class MessageConstants {
         throw new AssertionError();
     }
 
-    public static final String NORMAL_PREFIX = "§b§l[" + PluginConstants.PLUGIN_NAME + ']';
+    public static final String NORMAL_PREFIX = "§b§l[!]";
     public static final String UNCOLORED_PREFIX = ChatColor.stripColor(NORMAL_PREFIX);
-    public static final String ERROR_PREFIX = "§c§l" + UNCOLORED_PREFIX + "§c";
+    public static final String ERROR_PREFIX = "§c§l" + UNCOLORED_PREFIX + ChatColor.RED;
 
     public static final String BROADCAST_CHALLENGE_START
             = NORMAL_PREFIX + "§r Die Challenge ist jetzt §b§lgestartet§r.";
@@ -27,7 +27,7 @@ public final class MessageConstants {
             = NORMAL_PREFIX + "§r Die Challenge ist jetzt wieder §b§laktiv§r.";
 
     public static final String BROADCAST_CHALLENGE_STOP
-            = NORMAL_PREFIX + "§r Die Challenge ist jetzt §c§lbeendet§r.";
+            = NORMAL_PREFIX + "§r Die Challenge wurde nach §c§l%s §lbeendet§r.";
 
     public static final String CHALLENGE_NOT_STARTED
             = ERROR_PREFIX + " Die Challenge ist nicht gestartet.";
@@ -36,13 +36,13 @@ public final class MessageConstants {
             = ERROR_PREFIX + " Die Challenge ist bereits gestartet!";
 
     public static final String CHALLENGE_PAUSE_DUPLICATE
-            = ERROR_PREFIX + " Die Challenge ist bereits pausiert! §7§o(Meintest du \"/start\"?)";
+            = ERROR_PREFIX + " Die Challenge ist bereits pausiert! §7(\"/cstart\"?)";
 
     public static final String CHALLENGE_STOP_DUPLICATE
-            = ERROR_PREFIX + " Die Challenge ist nicht gestartet! §7§o(Meintest du \"/start\"?)";
+            = ERROR_PREFIX + " Die Challenge ist nicht gestartet! §7(\"/cpause\"?)";
 
     public static final String CHALLENGE_ACTION_PAUSE
-            = ChatColor.RED + "Diese Aktion ist während der Pause ausgeschaltet!";
+            = ERROR_PREFIX + " Diese Aktion ist während der §lPause§c ausgeschaltet!";
 
 
 }

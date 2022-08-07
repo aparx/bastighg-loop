@@ -2,6 +2,9 @@ package io.github.aparx.challenges.looping.command;
 
 import com.google.common.base.Preconditions;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import com.google.j2objc.annotations.ReflectionSupport;
+import io.github.aparx.challenges.looping.MessageConstants;
+import io.github.aparx.challenges.looping.exception.CommandErrorException;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 import org.bukkit.Bukkit;
@@ -11,6 +14,7 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.Plugin;
+import org.checkerframework.checker.signature.qual.SignatureUnknown;
 
 import javax.swing.text.html.Option;
 import javax.validation.constraints.NotNull;
@@ -44,8 +48,8 @@ public class CommandHandler implements CommandExecutor {
         try {
             final ChallengeExecutable executable = match.get();
             return executable.onCommand(sender, command, label, args);
-        } catch (IllegalArgumentException e) {
-            sender.sendMessage();
+        } catch (CommandErrorException e) {
+            sender.sendMessage(MessageConstants.ERROR_PREFIX + e.getMessage());
         }
         return true;
     }
@@ -85,6 +89,13 @@ public class CommandHandler implements CommandExecutor {
         Preconditions.checkNotNull(pluginCommand, "command not registered");
         pluginCommand.setExecutor(null);
         return true;
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T extends ChallengeExecutable>
+    Optional<T> getByType(final @NotNull Class<T> type) {
+        Preconditions.checkNotNull(type);
+        return (Optional<T>) commands.stream().filter(type::isInstance).findFirst();
     }
 
 }

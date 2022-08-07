@@ -1,5 +1,6 @@
 package io.github.aparx.challenges.looping.scheduler.defaults;
 
+import com.google.common.base.Preconditions;
 import io.github.aparx.challenges.looping.ChallengePlugin;
 import io.github.aparx.challenges.looping.PluginConfig;
 import io.github.aparx.challenges.looping.scheduler.GameScheduler;
@@ -7,6 +8,7 @@ import io.github.aparx.challenges.looping.utils.TickUnit;
 import lombok.Getter;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
+import org.apache.commons.lang3.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.plugin.Plugin;
@@ -22,21 +24,40 @@ import static io.github.aparx.challenges.looping.PluginMagics.PluginState.POST_L
  */
 public final class ChallengeScheduler extends GameScheduler {
 
+    @NotNull
+    public static String createTimeString(final long gameTicks) {
+        StringBuilder builder = new StringBuilder();
+        appendTimeToBuilder(builder, gameTicks);
+        return builder.toString();
+    }
+
+    public static void appendTimeToBuilder(
+            final @NotNull StringBuilder timeBuilder,
+            final long gameTicks) {
+        Preconditions.checkNotNull(timeBuilder);
+        long sec = TickUnit.TICK.convert(gameTicks, TickUnit.SECOND, true);
+        long min = TickUnit.TICK.convert(gameTicks, TickUnit.MINUTE, true);
+        long hours = TickUnit.TICK.convert(gameTicks, TickUnit.HOUR, true);
+        long days = TickUnit.TICK.convert(gameTicks, TickUnit.DAY, false);
+        timeToString(timeBuilder, days, hours, 'd');
+        timeToString(timeBuilder, hours, min, 'h');
+        timeToString(timeBuilder, min, sec, 'm');
+        timeToString(timeBuilder, Math.max(sec, 1), 0, 's');
+    }
+
     private static void timeToString(
             @NotNull StringBuilder outBuilder,
             long displayTime, long successorTime,
             char displayUnit, ChatColor... displayColors) {
-        if (displayTime > 0) {
-            if (displayColors != null) {
-                for (ChatColor c : displayColors) {
-                    outBuilder.append(c);
-                }
+        if (displayTime <= 0) return;
+        if (displayColors != null) {
+            for (ChatColor c : displayColors) {
+                outBuilder.append(c);
             }
-            outBuilder.append(displayTime).append(displayUnit);
         }
-        if (successorTime > 0) {
-            outBuilder.append(' ');
-        }
+        outBuilder.append(displayTime).append(displayUnit);
+        if (successorTime <= 0) return;
+        outBuilder.append(' ');
     }
 
     /* ChallengeScheduler implementation */
@@ -80,7 +101,7 @@ public final class ChallengeScheduler extends GameScheduler {
 
     @Override
     protected void onScheduleStop() {
-        if (!ChallengePlugin.isGameStarted()) {
+        if (!ChallengePlugin.isGameImplyingStart()) {
             // We only reset the game ticks if the plugin was not just
             // reloaded, but someone intentionally and explicitly stopped
             // the challenge
@@ -98,9 +119,6 @@ public final class ChallengeScheduler extends GameScheduler {
         if (gameTicks % 10 == 0) saveGameTicks(gameTicks);
         // We use an additional tick measurement, due to the nature
         // of pause-ability and #getTicksAlive()
-        long sec = TickUnit.TICK.convert(gameTicks, TickUnit.SECOND, true);
-        long min = TickUnit.TICK.convert(gameTicks, TickUnit.MINUTE, true);
-        long hours = TickUnit.TICK.convert(gameTicks, TickUnit.HOUR, true);
         StringBuilder timeBuilder = new StringBuilder();
         if (isPaused()) {
             // Use gray and bold color font from now on
@@ -109,10 +127,10 @@ public final class ChallengeScheduler extends GameScheduler {
             // Use aqua and bold color font from now on
             timeBuilder.append(ChatColor.AQUA).append(ChatColor.BOLD);
         }
-        timeToString(timeBuilder, hours, min, 'h');
-        timeToString(timeBuilder, min, sec, 'm');
-        timeToString(timeBuilder, sec, 0, 's', ChatColor.GRAY);
-        var timeText = new TextComponent(timeBuilder.toString());
+        appendTimeToBuilder(timeBuilder, gameTicks);
+        final String timeString = timeBuilder.toString();
+        if (StringUtils.isEmpty(ChatColor.stripColor(timeString))) return;
+        var timeText = new TextComponent(timeString);
         Bukkit.getOnlinePlayers().forEach(player -> {
             player.spigot().sendMessage(ChatMessageType.ACTION_BAR, timeText);
         });
