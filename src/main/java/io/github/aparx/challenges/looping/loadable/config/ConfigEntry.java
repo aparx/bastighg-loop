@@ -3,6 +3,7 @@ package io.github.aparx.challenges.looping.loadable.config;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
+import org.bukkit.configuration.file.FileConfiguration;
 
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
@@ -12,7 +13,7 @@ import javax.validation.constraints.NotNull;
  * @version 01:31 CET, 07.08.2022
  * @since 1.0
  */
-public class ConfigEntry<T> {
+public final class ConfigEntry<T> {
 
     @NotNull @Getter
     private final String key;
@@ -48,8 +49,21 @@ public class ConfigEntry<T> {
         if (type.isEnum()) {
             return (T) getAsEnum((Class) type, (Enum) def);
         }
-        return getConfig().getConfiguration().getObject(
-                getKey(), getType(), def);
+        // Now we get the actual object through our type
+        FileConfiguration config = getConfig().getConfiguration();
+        return config.getObject(getKey(), getType(), def);
+    }
+
+    public long getAsLong() {
+        return getAsLong(0);
+    }
+
+    public int getAsInt() {
+        return getAsInt(0);
+    }
+
+    public double getAsDouble() {
+        return getAsDouble(0);
     }
 
     @Nullable
@@ -74,21 +88,9 @@ public class ConfigEntry<T> {
         return getAsString(null);
     }
 
-    public long getAsLong() {
-        return getAsLong(0);
-    }
-
-    public int getAsInt() {
-        return getAsInt(0);
-    }
-
-    public double getAsDouble() {
-        return getAsDouble(0);
-    }
-
     @Nullable
     public <E extends Enum<E>>
-    E getAsEnum(@NotNull Class<E> enumType, E def) {
+    E getAsEnum(@NotNull Class<E> enumType, @Nullable E def) {
         Preconditions.checkNotNull(enumType);
         String enumName = getAsString();
         if (StringUtils.isEmpty(enumName))

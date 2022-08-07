@@ -15,10 +15,10 @@ public class PluginConfig extends AbstractConfig {
 
     @NotNull
     public final ConfigEntry<PluginMagics.GameState> lastState
-            = createEntry("game.lastState", PluginMagics.GameState.class);
+            = createEntry("lastGameState.state", PluginMagics.GameState.class);
 
     public final ConfigEntry<Long> gameTicks
-            = createEntry("game.lastTicks", Long.class);
+            = createEntry("lastGameState.ticks", Long.class);
 
     public PluginConfig(
             final @NotNull Plugin plugin) {
