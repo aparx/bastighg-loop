@@ -33,7 +33,7 @@ public abstract class ChallengeExecutable implements CommandExecutor {
     }
 
     protected void assertPluginState(PluginMagics.PluginState state) {
-        if (!ChallengePlugin.isPluginState(state)) {
+        if (!ChallengePlugin.isLoadState(state)) {
             throw new IllegalArgumentException("Plugin has not finished loading or cannot be loaded");
         }
     }

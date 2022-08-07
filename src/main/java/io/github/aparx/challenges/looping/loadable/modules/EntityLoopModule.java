@@ -14,6 +14,7 @@ import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityShootBowEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.world.ChunkUnloadEvent;
 import org.bukkit.plugin.Plugin;
@@ -103,14 +104,6 @@ public final class EntityLoopModule
 
     /* Multi-Entity-Action methods */
 
-    public void introduceEntities(@NotNull Iterator<? super ArmorStand> audience) {
-        actionOnEntities(audience, LoopModuleExtension::introduceEntity);
-    }
-
-    public void invalidateEntities(@NotNull Iterator<? super ArmorStand> audience) {
-        actionOnEntities(audience, LoopModuleExtension::invalidateEntity);
-    }
-
     public synchronized void actionOnEntities(
             final @NotNull Iterator<? super ArmorStand> audience,
             final @NotNull BiPredicate<LoopModuleExtension<?>, ArmorStand> action) {
@@ -136,14 +129,16 @@ public final class EntityLoopModule
     public synchronized void onChunkLoad(ChunkLoadEvent event) {
         Entity[] entities = event.getChunk().getEntities();
         if (ArrayUtils.isEmpty(entities)) return;
-        introduceEntities(Arrays.stream(entities).iterator());
+        actionOnEntities(Arrays.stream(entities).iterator(),
+                LoopModuleExtension::introduceEntity);
     }
 
     @EventHandler
     public synchronized void onChunkUnload(ChunkUnloadEvent event) {
         Entity[] entities = event.getChunk().getEntities();
         if (ArrayUtils.isEmpty(entities)) return;
-        invalidateEntities(Arrays.stream(entities).iterator());
+        actionOnEntities(Arrays.stream(entities).iterator(),
+                LoopModuleExtension::invalidateEntity);
     }
 
     /**

@@ -5,6 +5,7 @@ import io.github.aparx.challenges.looping.MessageConstants;
 import io.github.aparx.challenges.looping.PluginMagics;
 import io.github.aparx.challenges.looping.command.ChallengeCommand;
 import io.github.aparx.challenges.looping.command.ChallengeExecutable;
+import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 
@@ -29,12 +30,14 @@ public class CommandStop extends ChallengeExecutable {
             sender.sendMessage(MessageConstants.CHALLENGE_STOP_DUPLICATE);
             return true;
         }
-        if (!magics.isGameState(PluginMagics.GameState.STARTED)) {
+        if (!magics.isGameStarted()) {
             sender.sendMessage(MessageConstants.CHALLENGE_NOT_STARTED);
             return true;
         }
-        instance.updateChallenge(PluginMagics.GameState.STOPPED);
-        return false;
+        if (instance.updateChallenge(PluginMagics.GameState.STOPPED)) {
+            Bukkit.broadcastMessage(MessageConstants.BROADCAST_CHALLENGE_STOP);
+        }
+        return true;
     }
 
 }

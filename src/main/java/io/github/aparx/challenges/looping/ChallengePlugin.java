@@ -19,7 +19,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import javax.validation.constraints.NotNull;
 
-import static io.github.aparx.challenges.looping.MessageConstants.*;
 import static io.github.aparx.challenges.looping.PluginMagics.GameState.*;
 import static io.github.aparx.challenges.looping.PluginMagics.PluginState.*;
 
@@ -52,9 +51,18 @@ public final class ChallengePlugin extends JavaPlugin {
         return runningInstance.getPluginMagics();
     }
 
-    public static boolean isPluginState(PluginMagics.PluginState state) {
-        return runningInstance != null && getMagics().isState(state);
+    public static boolean isLoadState(PluginMagics.PluginState state) {
+        return runningInstance != null && getMagics().isLoadState(state);
     }
+
+    public static boolean isGameState(PluginMagics.GameState state) {
+        return runningInstance != null && getMagics().isGameState(state);
+    }
+
+    public static boolean isGameStarted() {
+        return runningInstance != null && getMagics().isGameStarted();
+    }
+
 
     @NotNull
     public static DebugLogger getDebugLogger() {
@@ -73,6 +81,9 @@ public final class ChallengePlugin extends JavaPlugin {
     private final ModuleManager moduleManager;
 
     @NotNull @Getter
+    private final PluginConfig pluginConfig;
+
+    @NotNull @Getter
     private CommandHandler commandHandler;
 
     public ChallengePlugin() {
@@ -81,6 +92,7 @@ public final class ChallengePlugin extends JavaPlugin {
         this.mainRegister = new LoadableRegister<>(this);
         this.moduleManager = new ModuleManager(this);
         this.pluginMagics = new PluginMagics();
+        this.pluginConfig = new PluginConfig(this);
     }
 
     @Override
@@ -109,16 +121,13 @@ public final class ChallengePlugin extends JavaPlugin {
         } finally {
             logger.info(() -> "Pre-loading completed");
             pluginMagics.setState(POST_LOAD);
-            if (pluginMagics.isDebugMode()) {
-                // Starts the plugin in started due to the debug mode
-                updateChallenge(STARTED);
-            }
+            updateChallenge(pluginConfig.lastState.get());
         }
     }
 
     @Override
     public void onDisable() {
-        if (!pluginMagics.isState(POST_LOAD)) return;
+        if (!pluginMagics.isLoadState(POST_LOAD)) return;
         mainRegister.unregisterAll();
     }
 
@@ -129,50 +138,44 @@ public final class ChallengePlugin extends JavaPlugin {
      * starting, stopping or pausing the challenge. It is not called when
      * the plugin is temporarily disabled.
      *
-     * @param state the new state of the challenge
+     * @param newState the new state of the challenge
      * @return true if the state was changed
      */
     @CanIgnoreReturnValue
-    public boolean updateChallenge(PluginMagics.GameState state) {
-        Preconditions.checkNotNull(state);
-        PluginMagics pluginMagics = getPluginMagics();
-        PluginMagics.GameState current = pluginMagics.getGameState();
-        pluginMagics.setGameState(state);
-        if (current == state) return false;
-        if (current == PAUSED) {
+    public boolean updateChallenge(PluginMagics.GameState newState) {
+        Preconditions.checkArgument(isLoadState(POST_LOAD));
+        final DebugLogger log = getDebugLogger();
+        final PluginMagics pluginMagics = getPluginMagics();
+        final PluginMagics.GameState nowState = pluginMagics.getGameState();
+        if (newState == null || nowState == newState) return false;
+        // Updates the general state within the data- and config object
+        getPluginConfig().lastState.set(newState);
+        pluginMagics.setGameState(newState);
+        // Now it is actually determined what consequences the change has
+        if (nowState == PAUSED) {
             mainRegister.setPaused(false);
-            if (state == STARTED) {
-                Bukkit.broadcastMessage(BROADCAST_CHALLENGE_RESUME);
-                return true;
-            }
+            if (newState == STARTED) return true;
+        } else if (nowState == STOPPED && newState.isRequiringGameStarted()) {
+            // Since the new state is reliant on a start, but we have not
+            // even instantiated or even loaded, we first need to boot
+            return updateChallenge(STARTED) && updateChallenge(newState);
         }
-        switch (state) {
+        log.info(() -> "Status changed from %s to %s", nowState, newState);
+        switch (newState) {
             /* Signals every loadable to pause */
-            case PAUSED -> {
-                mainRegister.setPaused(true);
-                Bukkit.broadcastMessage(BROADCAST_CHALLENGE_PAUSE);
-            }
+            case PAUSED -> mainRegister.setPaused(true);
             /* Signals every loadable to stop */
             case STOPPED -> {
                 mainRegister.unload(this);
-                explicitStop();
-                Bukkit.broadcastMessage(BROADCAST_CHALLENGE_STOP);
+                getModules().getInstance(EntityLoopModule.class).killAll();
             }
             /* Signals every loadable to start */
-            case STARTED -> {
-                mainRegister.load(this);
-                Bukkit.broadcastMessage(BROADCAST_CHALLENGE_START);
-            }
+            case STARTED -> mainRegister.load(this);
             default -> {
                 return false;
             }
         }
         return true;
     }
-
-    private void explicitStop() {
-        getModules().getInstance(EntityLoopModule.class).killAll();
-    }
-
 
 }

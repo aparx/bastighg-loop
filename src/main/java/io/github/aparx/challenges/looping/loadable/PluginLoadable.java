@@ -19,7 +19,7 @@ public interface PluginLoadable {
      * @apiNote It is not guaranteed that this method is not called more
      * than once, even if this loadable is loaded already.
      */
-    void load(@NotNull Plugin plugin) throws Throwable;
+    default void load(@NotNull Plugin plugin) throws Throwable {}
 
     /**
      * Unloads this loadable entry.
@@ -29,6 +29,6 @@ public interface PluginLoadable {
      * @apiNote It is not guaranteed that this method is not called more
      * than once, even if this loadable is not loaded anymore.
      */
-    void unload(@NotNull Plugin plugin) throws Throwable;
+    default void unload(@NotNull Plugin plugin) throws Throwable {}
 
 }

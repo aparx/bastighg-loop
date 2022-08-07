@@ -5,6 +5,7 @@ import io.github.aparx.challenges.looping.MessageConstants;
 import io.github.aparx.challenges.looping.PluginMagics;
 import io.github.aparx.challenges.looping.command.ChallengeCommand;
 import io.github.aparx.challenges.looping.command.ChallengeExecutable;
+import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 
@@ -29,8 +30,10 @@ public class CommandStart extends ChallengeExecutable {
             sender.sendMessage(MessageConstants.CHALLENGE_START_DUPLICATE);
             return true;
         }
-        instance.updateChallenge(PluginMagics.GameState.STARTED);
-        return false;
+        if (instance.updateChallenge(PluginMagics.GameState.STARTED)) {
+            Bukkit.broadcastMessage(MessageConstants.BROADCAST_CHALLENGE_START);
+        }
+        return true;
     }
 
 }

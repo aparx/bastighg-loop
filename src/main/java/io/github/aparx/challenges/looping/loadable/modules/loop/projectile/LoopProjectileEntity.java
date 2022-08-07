@@ -253,7 +253,7 @@ public class LoopProjectileEntity extends LoopEntity {
         // Remove the back-animated projectile when invalidated
         if (!backTransition) return;
         Projectile projectile = getProjectile();
-        if (projectile != null && projectile.isValid()) {
+        if (projectile != null) {
             projectile.remove();
         }
     }

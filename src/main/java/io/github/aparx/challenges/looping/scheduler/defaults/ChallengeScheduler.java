@@ -1,22 +1,20 @@
 package io.github.aparx.challenges.looping.scheduler.defaults;
 
 import io.github.aparx.challenges.looping.ChallengePlugin;
-import io.github.aparx.challenges.looping.PluginConstants;
-import io.github.aparx.challenges.looping.loadable.modules.EntityLoopModule;
-import io.github.aparx.challenges.looping.logger.DebugLogger;
-import io.github.aparx.challenges.looping.scheduler.AbstractTask;
-import io.github.aparx.challenges.looping.scheduler.DelegatedTask;
+import io.github.aparx.challenges.looping.PluginConfig;
+import io.github.aparx.challenges.looping.PluginMagics;
 import io.github.aparx.challenges.looping.scheduler.GameScheduler;
-import io.github.aparx.challenges.looping.scheduler.RelativeDuration;
 import io.github.aparx.challenges.looping.utils.TickUnit;
+import lombok.Getter;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.plugin.Plugin;
 
-import javax.swing.text.StyledEditorKit;
 import javax.validation.constraints.NotNull;
+
+import static io.github.aparx.challenges.looping.PluginMagics.PluginState.POST_LOAD;
 
 /**
  * @author aparx (Vinzent Zeband)
@@ -25,9 +23,27 @@ import javax.validation.constraints.NotNull;
  */
 public final class ChallengeScheduler extends GameScheduler {
 
-    private static final long SECOND_ELAPSE = 20;
+    private static void timeToString(
+            @NotNull StringBuilder outBuilder,
+            long displayTime, long successorTime,
+            char displayUnit, ChatColor... displayColors) {
+        if (displayTime > 0) {
+            if (displayColors != null) {
+                for (ChatColor c : displayColors) {
+                    outBuilder.append(c);
+                }
+            }
+            outBuilder.append(displayTime).append(displayUnit);
+        }
+        if (successorTime > 0) {
+            outBuilder.append(' ');
+        }
+    }
 
-    private long ticksNonPaused = 0;
+    /* ChallengeScheduler implementation */
+
+    @Getter
+    private long gameTicks = 0;
 
     public ChallengeScheduler(Plugin plugin) {
         super(plugin);
@@ -40,22 +56,46 @@ public final class ChallengeScheduler extends GameScheduler {
     }
 
     @Override
+    protected void onScheduleStart() {
+        if (ChallengePlugin.isLoadState(POST_LOAD)) {
+            ChallengePlugin plugin = ChallengePlugin.getInstance();
+            PluginConfig config = plugin.getPluginConfig();
+            setGameTicks(config.gameTicks.getAsLong(gameTicks));
+        }
+    }
+
+    public void setGameTicks(long newTicks) {
+        this.gameTicks = newTicks;
+        if (ChallengePlugin.isLoadState(POST_LOAD)) {
+            ChallengePlugin plugin = ChallengePlugin.getInstance();
+            PluginConfig config = plugin.getPluginConfig();
+            config.gameTicks.set(newTicks);
+        }
+    }
+
+    @Override
     protected void onScheduleStop() {
-        ticksNonPaused = 0;
+        if (!ChallengePlugin.isGameStarted()) {
+            // We only reset the game ticks if the plugin was not just
+            // reloaded, but someone intentionally and explicitly stopped
+            // the challenge
+            setGameTicks(0);
+        }
     }
 
     @Override
     protected synchronized void onUpdate() {
         if (!isPaused()) {
             super.onUpdate();   // update all tasks
-            ++ticksNonPaused;
+            ++gameTicks;
         }
+        // Saves the current tick amount twice every second
+        if (gameTicks % 10 == 0) saveTicks();
         // We use an additional tick measurement, due to the nature
         // of pause-ability and #getTicksAlive()
-        long ticksRan = ticksNonPaused;
-        long sec = TickUnit.TICK.convert(ticksRan, TickUnit.SECOND, true);
-        long min = TickUnit.TICK.convert(ticksRan, TickUnit.MINUTE, true);
-        long hours = TickUnit.TICK.convert(ticksRan, TickUnit.HOUR, true);
+        long sec = TickUnit.TICK.convert(gameTicks, TickUnit.SECOND, true);
+        long min = TickUnit.TICK.convert(gameTicks, TickUnit.MINUTE, true);
+        long hours = TickUnit.TICK.convert(gameTicks, TickUnit.HOUR, true);
         StringBuilder timeBuilder = new StringBuilder();
         if (isPaused()) {
             // Use gray and bold color font from now on
@@ -73,21 +113,8 @@ public final class ChallengeScheduler extends GameScheduler {
         });
     }
 
-    private static void timeToString(
-            @NotNull StringBuilder outBuilder,
-            long displayTime, long successorTime,
-            char displayUnit, ChatColor... displayColors) {
-        if (displayTime > 0) {
-            if (displayColors != null) {
-                for (ChatColor c : displayColors) {
-                    outBuilder.append(c);
-                }
-            }
-            outBuilder.append(displayTime).append(displayUnit);
-        }
-        if (successorTime > 0) {
-            outBuilder.append(' ');
-        }
+    private void saveTicks() {
+        setGameTicks(gameTicks);
     }
 
 }

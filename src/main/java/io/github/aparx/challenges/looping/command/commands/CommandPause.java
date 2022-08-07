@@ -5,6 +5,7 @@ import io.github.aparx.challenges.looping.MessageConstants;
 import io.github.aparx.challenges.looping.PluginMagics;
 import io.github.aparx.challenges.looping.command.ChallengeCommand;
 import io.github.aparx.challenges.looping.command.ChallengeExecutable;
+import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 
@@ -33,7 +34,9 @@ public class CommandPause extends ChallengeExecutable {
             sender.sendMessage(MessageConstants.CHALLENGE_NOT_STARTED);
             return true;
         }
-        instance.updateChallenge(PluginMagics.GameState.PAUSED);
+        if (instance.updateChallenge(PluginMagics.GameState.PAUSED)) {
+            Bukkit.broadcastMessage(MessageConstants.BROADCAST_CHALLENGE_PAUSE);
+        }
         return false;
     }
 

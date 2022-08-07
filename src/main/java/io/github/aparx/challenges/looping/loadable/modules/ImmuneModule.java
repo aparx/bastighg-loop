@@ -45,16 +45,6 @@ public final class ImmuneModule extends ChallengeModule implements Listener {
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
-    public void onMove(PlayerMoveEvent e) {
-        if (!isPaused()) return;
-        Player player = e.getPlayer();
-        if (player.isFlying()) return;
-        if (isMovedBlock(e.getFrom(), e.getTo())) {
-            e.setTo(e.getFrom());
-        }
-    }
-
-    @EventHandler(priority = EventPriority.HIGHEST)
     public void onBlockPlace(BlockPlaceEvent e) {
         if (!isPaused()) return;
         e.setCancelled(true);
@@ -85,12 +75,6 @@ public final class ImmuneModule extends ChallengeModule implements Listener {
         if (e.getItem() != null) {
             player.sendMessage(MessageConstants.CHALLENGE_ACTION_PAUSE);
         }
-    }
-
-    private boolean isMovedBlock(Location from, Location to) {
-        if (from == null || to == null) return false;
-        return from.getBlockX() != to.getBlockX()
-                || from.getBlockZ() != to.getBlockZ();
     }
 
 }

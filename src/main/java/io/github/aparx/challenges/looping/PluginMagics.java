@@ -22,7 +22,7 @@ public final class PluginMagics {
 
     volatile private GameState gameState = GameState.STOPPED;
 
-    public boolean isState(PluginState test) {
+    public boolean isLoadState(PluginState test) {
         return getState() == test;
     }
 
@@ -34,14 +34,30 @@ public final class PluginMagics {
         return gameState;
     }
 
+    public boolean isGameStarted() {
+        GameState state = getGameState();
+        if (state == null) return false;
+        return state == GameState.STARTED || state.isRequiringGameStarted();
+    }
+
     public boolean isGameState(GameState state) {
         return getGameState() == state;
     }
 
     public enum GameState {
-        STARTED,
-        STOPPED,
-        PAUSED
+        STARTED(false),
+        STOPPED(false),
+        PAUSED(true);
+
+        private boolean requiringGameStarted;
+
+        GameState(boolean requiringGameStarted) {
+            this.requiringGameStarted = requiringGameStarted;
+        }
+
+        public boolean isRequiringGameStarted() {
+            return requiringGameStarted;
+        }
     }
 
     public enum PluginState {
