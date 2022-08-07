@@ -12,17 +12,24 @@ public enum TickUnit {
     MINUTE(60, 60 * SECOND.getTimeSecondFactor()),
     HOUR(24, 60 * MINUTE.getTimeSecondFactor()),
     DAY(7, 24 * HOUR.getTimeSecondFactor()),
-    WEEK(4, 7 * DAY.getTimeSecondFactor()),
-    MONTH(12, 4 * WEEK.getTimeSecondFactor()),
-    YEAR(10, 12 * MONTH.getTimeSecondFactor()),
-    CENTURY(100, 10 * YEAR.getTimeSecondFactor()),
-    MILLENNIUM(1000, 10 * CENTURY.getTimeSecondFactor());
+    WEEK(4, 7 * DAY.getTimeSecondFactor());
 
     private final long moduloDivisor, timeSecondFactor;
 
     TickUnit(long moduloDivisor, long timeSecondFactor) {
         this.moduloDivisor = moduloDivisor;
         this.timeSecondFactor = timeSecondFactor;
+    }
+
+    public char getDisplayChar() {
+        return switch (this) {
+            case TICK -> 't';
+            case SECOND -> 's';
+            case MINUTE -> 'm';
+            case HOUR -> 'h';
+            case DAY -> 'd';
+            case WEEK -> 'w';
+        };
     }
 
     public long convert(long time, TickUnit newTime) {

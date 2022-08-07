@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import io.github.aparx.challenges.looping.ChallengePlugin;
 import io.github.aparx.challenges.looping.PluginConfig;
 import io.github.aparx.challenges.looping.scheduler.GameScheduler;
+import io.github.aparx.challenges.looping.utils.DisplayUtils;
 import io.github.aparx.challenges.looping.utils.TickUnit;
 import lombok.Getter;
 import net.md_5.bungee.api.ChatMessageType;
@@ -23,42 +24,6 @@ import static io.github.aparx.challenges.looping.PluginMagics.PluginState.POST_L
  * @since 1.0
  */
 public final class ChallengeScheduler extends GameScheduler {
-
-    @NotNull
-    public static String createTimeString(final long gameTicks) {
-        StringBuilder builder = new StringBuilder();
-        appendTimeToBuilder(builder, gameTicks);
-        return builder.toString();
-    }
-
-    public static void appendTimeToBuilder(
-            final @NotNull StringBuilder timeBuilder,
-            final long gameTicks) {
-        Preconditions.checkNotNull(timeBuilder);
-        long sec = TickUnit.TICK.convert(gameTicks, TickUnit.SECOND, true);
-        long min = TickUnit.TICK.convert(gameTicks, TickUnit.MINUTE, true);
-        long hours = TickUnit.TICK.convert(gameTicks, TickUnit.HOUR, true);
-        long days = TickUnit.TICK.convert(gameTicks, TickUnit.DAY, false);
-        timeToString(timeBuilder, days, hours, 'd');
-        timeToString(timeBuilder, hours, min, 'h');
-        timeToString(timeBuilder, min, sec, 'm');
-        timeToString(timeBuilder, Math.max(sec, 1), 0, 's');
-    }
-
-    private static void timeToString(
-            @NotNull StringBuilder outBuilder,
-            long displayTime, long successorTime,
-            char displayUnit, ChatColor... displayColors) {
-        if (displayTime <= 0) return;
-        if (displayColors != null) {
-            for (ChatColor c : displayColors) {
-                outBuilder.append(c);
-            }
-        }
-        outBuilder.append(displayTime).append(displayUnit);
-        if (successorTime <= 0) return;
-        outBuilder.append(' ');
-    }
 
     /* ChallengeScheduler implementation */
 
@@ -127,7 +92,7 @@ public final class ChallengeScheduler extends GameScheduler {
             // Use aqua and bold color font from now on
             timeBuilder.append(ChatColor.AQUA).append(ChatColor.BOLD);
         }
-        appendTimeToBuilder(timeBuilder, gameTicks);
+        DisplayUtils.appendTimeToBuilder(timeBuilder, gameTicks);
         final String timeString = timeBuilder.toString();
         if (StringUtils.isEmpty(ChatColor.stripColor(timeString))) return;
         var timeText = new TextComponent(timeString);
