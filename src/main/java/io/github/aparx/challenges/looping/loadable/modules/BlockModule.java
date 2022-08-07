@@ -22,6 +22,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.*;
+import org.bukkit.event.player.PlayerBucketEmptyEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 
@@ -113,6 +115,7 @@ public final class BlockModule extends ChallengeModule implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onBlockPlace(BlockPlaceEvent event) {
+        System.out.println("place " + event.getBlock().getType());
         if (isNonProcessableEventOrMoment(event)) return;
         BlockState blockReplacedState = event.getBlockReplacedState();
         BlockData blockData = blockReplacedState.getBlockData();
@@ -141,7 +144,24 @@ public final class BlockModule extends ChallengeModule implements Listener {
         Location thisLoc = block.getLocation();
         if (isOccupied(srcLoc) || isOccupied(thisLoc)) {
             event.setCancelled(true);
-            free(thisLoc);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onBlockFromTo(PlayerBucketEmptyEvent event) {
+        if (isNonProcessableEventOrMoment(event)) return;
+        var struct = BlockStructures.getAffectedBlocks(event.getBlock(), true);
+        lateStructurePlacement(struct, event, false);
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onBlockFromTo(BlockFromToEvent event) {
+        if (isNonProcessableEventOrMoment(event)) return;
+        Block to = event.getBlock();
+        Block from = event.getToBlock();
+        if (to.isLiquid() && !from.getType().isAir()) {
+            var struct = BlockStructures.getAffectedBlocks(from, true);
+            lateStructurePlacement(struct, event, false);
         }
     }
 
