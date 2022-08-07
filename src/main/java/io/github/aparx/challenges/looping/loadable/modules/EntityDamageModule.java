@@ -15,11 +15,13 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 
+import java.util.EnumSet;
 import java.util.concurrent.ThreadLocalRandom;
 
-import static org.bukkit.event.entity.EntityDamageEvent.DamageCause.ENTITY_EXPLOSION;
+import static org.bukkit.event.entity.EntityDamageEvent.DamageCause.*;
 
 /**
  * Module responsible for continuously damaging entities after being
@@ -42,6 +44,13 @@ public final class EntityDamageModule
      */
     public static final int MAX_ENTITY_ITERATIONS = 50;
 
+    /**
+     * Set of damage causes, whose when causing the death of an entity lead
+     * to the entity being respawned right after.
+     */
+    private static final EnumSet<EntityDamageEvent.DamageCause> PLAUSIBLE_RESPAWNS
+            = EnumSet.of(ENTITY_EXPLOSION, PROJECTILE, FIRE, ENTITY_ATTACK);
+
     @EventHandler(priority = EventPriority.LOWEST)
     public void onEntityDead(EntityDeathEvent event) {
         if (isNonProcessableEventOrMoment(event)) return;
@@ -54,7 +63,8 @@ public final class EntityDamageModule
             // Include entities whose death is through an explosion
             var lastDamage = entity.getLastDamageCause();
             if (isNonProcessableEventOrMoment(lastDamage)) return;
-            if (lastDamage.getCause() != ENTITY_EXPLOSION) return;
+            EntityDamageEvent.DamageCause cause = lastDamage.getCause();
+            if (!PLAUSIBLE_RESPAWNS.contains(cause)) return;
         }
         final Location location = entity.getLocation().clone();
         SchedulerModule module = ChallengePlugin.getSchedulers();
@@ -80,7 +90,7 @@ public final class EntityDamageModule
         if (entity instanceof LivingEntity damagee) {
             final var debugger = ChallengePlugin.getDebugLogger();
             Entity damager = event.getDamager();
-            if (!(damager instanceof Player)) return;
+            if (!PLAUSIBLE_RESPAWNS.contains(event.getCause())) return;
             SchedulerModule module = ChallengePlugin.getSchedulers();
             GameScheduler scheduler = module.getPrimaryScheduler();
             // This way of doing it may not be working after stopping the
