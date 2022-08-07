@@ -42,11 +42,11 @@ public class CommandInfo extends ChallengeExecutable {
         sender.sendMessage(NORMAL_PREFIX + " §r§m----------§b§l Info§r §m----------");
         sender.sendMessage(NORMAL_PREFIX + " §rChallenge Status: §b§l" + magics.getGameState());
         sender.sendMessage(NORMAL_PREFIX + " §rTotal Attachments: "
-                + getColorForCount(childAmount) + ChatColor.BOLD + childAmount);
+                + getColorForCount(childAmount, 2.5) + ChatColor.BOLD + childAmount);
         sender.sendMessage(NORMAL_PREFIX + " §rInstances (" + loops.getTotalInstances() + "):");
         loops.getLoops().forEach((c, m) -> {
             int count = m.getEntities().size();
-            ChatColor color = getColorForCount(count);
+            ChatColor color = getColorForCount(count, 1);
             sender.sendMessage(NORMAL_PREFIX
                     + " §7§l>§r " + c.getSimpleName()
                     + ": " + color + ChatColor.BOLD + count);
@@ -55,11 +55,11 @@ public class CommandInfo extends ChallengeExecutable {
         return false;
     }
 
-    private ChatColor getColorForCount(int count) {
-        return count >= 3500 ? ChatColor.DARK_RED
-                : (count >= 3000 ? ChatColor.RED
-                : (count >= 2000 ? ChatColor.GOLD
-                : (count >= 1000 ? ChatColor.YELLOW
+    private ChatColor getColorForCount(int count, double factor) {
+        return count >= factor * 3500 ? ChatColor.DARK_RED
+                : (count >= factor * 3000 ? ChatColor.RED
+                : (count >= factor * 2000 ? ChatColor.GOLD
+                : (count >= factor * 1000 ? ChatColor.YELLOW
                 : (count == 0 ? ChatColor.GRAY
                 : ChatColor.AQUA))));
     }

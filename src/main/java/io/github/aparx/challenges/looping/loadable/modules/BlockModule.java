@@ -75,7 +75,7 @@ public final class BlockModule extends ChallengeModule implements Listener {
                 if (world == null) return;
                 BlockData current = world.getBlockData(location);
                 Material material = current.getMaterial();
-                if (material == Material.AIR) return;
+                if (material.isAir() || !material.isItem()) return;
                 world.dropItemNaturally(location, new ItemStack(material));
             });
         })));
@@ -130,6 +130,19 @@ public final class BlockModule extends ChallengeModule implements Listener {
         var struct = BlockStructures.getAffectedBlocks(
                 event.getBlock(), true, EXCLUDE_OCCUPIED_BLOCKS);
         lateStructurePlacement(struct, event, false);
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onBlockBreak(BlockSpreadEvent event) {
+        if (isNonProcessableEventOrMoment(event)) return;
+        Block block = event.getBlock();
+        Block source = event.getSource();
+        Location srcLoc = source.getLocation();
+        Location thisLoc = block.getLocation();
+        if (isOccupied(srcLoc) || isOccupied(thisLoc)) {
+            event.setCancelled(true);
+            free(thisLoc);
+        }
     }
 
     public boolean shouldDropBlocks(Player player) {

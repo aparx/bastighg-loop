@@ -105,7 +105,7 @@ public final class DisplayUtils {
             long t = from.convert(baseTime, units[i], i != 0);
             long n = isEnd ? 0 : from.convert(baseTime, units[1 + i], true);
             timeToString(timeBuilder, t, isEnd,
-                    !isEnd && (n > 0 || isNextEnd),
+                    n > 0 || isNextEnd,
                     units[i].getDisplayChar());
         }
     }

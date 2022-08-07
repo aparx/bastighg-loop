@@ -1,5 +1,6 @@
 package io.github.aparx.challenges.looping.loadable.modules.loop.projectile;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.EnumMultiset;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import io.github.aparx.challenges.looping.ChallengePlugin;
@@ -12,6 +13,7 @@ import io.github.aparx.challenges.looping.scheduler.RelativeDuration;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.block.data.type.Fire;
 import org.bukkit.entity.*;
 import org.bukkit.projectiles.ProjectileSource;
 import org.bukkit.util.Consumer;
@@ -50,7 +52,7 @@ public class LoopProjectileEntity extends LoopEntity {
     public static final String KEY_PROJECTILE_UUID = "projectile_UUID";
     public static final String KEY_PROJECTILE_LAND = "projectile_HitPos";
 
-    public static final int NORMAL_ANIM_TIME = 40;
+    public static final int NORMAL_ANIM_TIME = 100;
 
     private UUID projectileId;
     private WeakReference<Projectile> weakProjectile;
@@ -95,13 +97,13 @@ public class LoopProjectileEntity extends LoopEntity {
         // Tries to correct `vector` if it is invalid
         vector = ensureNonnullVector(vector);
         if (!isValidVector(vector)) {
-            vector = getInitialVelocity();
+            vector = getInitialVelocity().clone();
             if (!isValidVector(vector))
                 vector = new Vector();
         }
         final Vector v = vector;
         if (!spawnProjectile(location, e -> {
-            e.setVelocity(v);
+            applyVelocity(e, v);
             e.setShooter(latestSource);
             // Backwards transition animation specific
             e.setBounce(e.doesBounce() && !backTransition);
@@ -111,7 +113,7 @@ public class LoopProjectileEntity extends LoopEntity {
         // Reapplies velocity onto the projectile if possible
         projectile = getProjectile();
         if (projectile == null) return false;
-        projectile.setVelocity(v);
+        applyVelocity(projectile, v);
         return true;
     }
 
@@ -231,6 +233,9 @@ public class LoopProjectileEntity extends LoopEntity {
     }
 
     public void setBlockReset(@Nullable CapturedStructure blockReset) {
+        if (this.blockReset != null) {
+            this.blockReset.placeCapture();
+        }
         this.blockReset = blockReset;
     }
 
@@ -278,9 +283,7 @@ public class LoopProjectileEntity extends LoopEntity {
         Vector hitVec = getHitPosition();
         if (hitVec == null) return;
         Vector velocity = thisPos.toVector().subtract(hitVec).normalize();
-        if (!isValidVector(velocity)) {
-            velocity = getInitialVelocity().clone().multiply(-1);
-        }
+        //velocity = getInitialVelocity().clone().multiply(-1);
         spawnProjectile(hitVec.toLocation(world), velocity);
         if ((projectile = getProjectile()) == null) return;
         projectile.setGravity(false);
@@ -332,6 +335,18 @@ public class LoopProjectileEntity extends LoopEntity {
     @Override
     protected long getIntervalTime() {
         return PluginConstants.CHALLENGE_INTERVAL;
+    }
+
+    private void applyVelocity(@NotNull Projectile projectile, @NotNull Vector vector) {
+        Preconditions.checkNotNull(projectile);
+        Preconditions.checkNotNull(vector);
+        if (projectile instanceof Fireball) {
+            // Since fireballs prefer #setDirection to #setVelocity,
+            // we use that method to apply "velocity".
+            ((Fireball) projectile).setDirection(vector);
+            return;
+        }
+        projectile.setVelocity(vector);
     }
 
     private static Vector ensureNonnullVector(Vector vector) {

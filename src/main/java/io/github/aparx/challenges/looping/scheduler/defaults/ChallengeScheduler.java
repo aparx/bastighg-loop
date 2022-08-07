@@ -12,6 +12,7 @@ import net.md_5.bungee.api.chat.TextComponent;
 import org.apache.commons.lang3.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Sound;
 import org.bukkit.plugin.Plugin;
 
 import javax.validation.constraints.NotNull;
@@ -82,6 +83,7 @@ public final class ChallengeScheduler extends GameScheduler {
         }
         // Saves the current tick amount twice every second
         if (gameTicks % 10 == 0) saveGameTicks(gameTicks);
+        if (gameTicks < TickUnit.SECOND.getTimeSecondFactor()) return;
         // We use an additional tick measurement, due to the nature
         // of pause-ability and #getTicksAlive()
         StringBuilder timeBuilder = new StringBuilder();
@@ -90,12 +92,11 @@ public final class ChallengeScheduler extends GameScheduler {
             timeBuilder.append(ChatColor.GRAY).append("⏸ ");
         } else {
             // Use aqua and bold color font from now on
-            timeBuilder.append(ChatColor.AQUA).append(ChatColor.BOLD);
+            timeBuilder.append(ChatColor.AQUA);
         }
-        DisplayUtils.appendTimeToBuilder(timeBuilder, gameTicks);
-        final String timeString = timeBuilder.toString();
-        if (StringUtils.isEmpty(ChatColor.stripColor(timeString))) return;
-        var timeText = new TextComponent(timeString);
+        timeBuilder.append(ChatColor.BOLD);
+        DisplayUtils.appendTimeToBuilder(timeBuilder, 20 * gameTicks);
+        var timeText = new TextComponent(timeBuilder.toString());
         Bukkit.getOnlinePlayers().forEach(player -> {
             player.spigot().sendMessage(ChatMessageType.ACTION_BAR, timeText);
         });
